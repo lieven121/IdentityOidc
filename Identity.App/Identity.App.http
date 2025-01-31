@@ -1,6 +1,11 @@
 @Identity.App_HostAddress = http://localhost:5256
 
-GET {{Identity.App_HostAddress}}/weatherforecast/
+POST {{Identity.App_HostAddress}}/api/login
+Content-Type: application/json
 Accept: application/json
+{
+    "email": "admin@localhost",
+    "password": "Azerty123$"
+} 
 
 ###
