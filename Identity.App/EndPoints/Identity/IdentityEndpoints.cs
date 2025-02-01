@@ -7,31 +7,62 @@ namespace Identity.App.EndPoints.Identity;
 
 public static class IdentityEndpoints
 {
-    public static void MapIdentityEndpoints(this WebApplication app)
+    public static IEndpointRouteBuilder MapIdentityEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("");
 
-        group.MapGet("/api/test", (HttpContext httpContext) =>
+        group
+            .WithTags("Identity")
+            .WithName("Identity");
+
+        group.MapGet("/hi", () => "hi");
+
+        group.MapGet("/test", TestHandler)
+        .WithName("Test")
+        .AllowAnonymous();
+
+
+        group.MapPost("/login", LoginHandler)
+        .WithName("Login")
+        .AllowAnonymous();
+
+        group.MapPost("/logout", LogoutHandler)
+        .WithName("Logout")
+        .RequireAuthorization();
+
+
+        #region Handlers
+
+
+        IResult TestHandler(HttpContext httpContext)
         {
             if (httpContext.User.Identity?.IsAuthenticated != true)
                 return Results.Challenge();
 
             return Results.Ok(httpContext.User.Identity?.Name);
-        });
+        };
 
-        group.MapPost("/api/login", async (
-            LoginRequest dto,
 
-            SignInManager <ApplicationUser> signInManager,
-            UserManager<ApplicationUser> userManager,
-            HttpContext httpContext) =>
+        async Task<IResult> LoginHandler(
+                       LoginRequest dto,
+
+                       SignInManager<ApplicationUser> signInManager,
+                       UserManager<ApplicationUser> userManager,
+                       HttpContext httpContext)
         {
+            var user = await userManager.FindByEmailAsync(dto.Email);
 
             var isPersistent = true;
 
-            var result = await signInManager.PasswordSignInAsync(dto.Email, dto.Password, isPersistent, false);
+            if (string.IsNullOrWhiteSpace(user.UserName))
+            {
+                await Task.Delay(Random.Shared.Next(100, 500));
+                return Results.Unauthorized();
+            }
 
-            if(result.RequiresTwoFactor)
+            var result = await signInManager.PasswordSignInAsync(user.UserName, dto.Password, isPersistent, false);
+
+            if (result.RequiresTwoFactor)
             {
                 if (!string.IsNullOrEmpty(dto.TwoFactorCode))
                 {
@@ -41,23 +72,28 @@ public static class IdentityEndpoints
                 {
                     result = await signInManager.TwoFactorRecoveryCodeSignInAsync(dto.TwoFactorRecoveryCode);
                 }
-                if(!result.Succeeded)
+                if (!result.Succeeded)
                     return Results.Accepted("Otp Required");
             }
 
             //var user = await userManager.FindByEmailAsync("admin@localhost");
 
             //await signInManager.SignInAsync(user, true);
+            if (!result.Succeeded)
+                return Results.Unauthorized();
 
             return Results.Ok("Logged In");
-        });
+        }
 
-        group.MapPost("/api/logout", async (SignInManager<ApplicationUser> signInManager) =>
+        async Task LogoutHandler(SignInManager<ApplicationUser> signInManager)
         {
             await signInManager.SignOutAsync();
-        })
-        .RequireAuthorization();
+        };
 
+        #endregion
 
+        return app;
     }
+
+
 }

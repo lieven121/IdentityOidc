@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Hosting.Server;
 using NSwag;
 using NSwag.CodeGeneration.TypeScript;
 using NSwag.Generation.Processors.Security;
+using NSwag.CodeGeneration.CSharp;
+using NSwag.CodeGeneration.OperationNameGenerators;
 
 namespace Identity.App.Hosting;
 public static class SwaggerConfig
@@ -15,19 +17,19 @@ public static class SwaggerConfig
         var configuraration = app.Configuration;
         var services = app.Services;
 
-        //services.AddEndpointsApiExplorer();
+        services.AddEndpointsApiExplorer();
         //services.AddSwaggerGen();
         services.AddOpenApiDocument(options =>
         {
-            options.AddSecurity("token", new OpenApiSecurityScheme
-            {
-                In = OpenApiSecurityApiKeyLocation.Header,
-                Name = "Authorization",
-                Type = OpenApiSecuritySchemeType.ApiKey
-            });
+            //options.AddSecurity("token", new OpenApiSecurityScheme
+            //{
+            //    In = OpenApiSecurityApiKeyLocation.Header,
+            //    Name = "Authorization",
+            //    Type = OpenApiSecuritySchemeType.ApiKey
+            //});
 
-            options.OperationProcessors.Add(
-                new OperationSecurityScopeProcessor("token"));
+            //options.OperationProcessors.Add(
+            //    new OperationSecurityScopeProcessor("token"));
         });
 
         return app;
@@ -59,12 +61,49 @@ public static class SwaggerConfig
 
     public async static Task GenerateDotNetClient(this WebApplication app)
     {
+        var options = app.Configuration.GetSection("ClientGeneration:DotNet")?.Get<ClientGenerationOptions>();
+        if (options?.Enabled != true)
+            return;
 
+        var server = app.Services.GetService<IServer>();
+        var addF = server?.Features.Get<IServerAddressesFeature>();
+        var baseUrl = addF?.Addresses.FirstOrDefault();
+
+        if (baseUrl == null)
+        {
+            throw new InvalidOperationException("Failed to get base url");
+        }
+
+        var uri = new Uri(new Uri(baseUrl), swaggerSpecUrl);
+        var document = await OpenApiDocument.FromUrlAsync(uri.AbsoluteUri);
+
+
+        var settings = new CSharpClientGeneratorSettings
+        {
+            ClassName = "{controller}Client",
+            ClientBaseClass = "ClientBase",
+            GenerateClientClasses = true,
+            GenerateClientInterfaces = false,
+            GenerateOptionalParameters = true,
+        };
+
+        var outputFolder = Environment.CurrentDirectory;
+        if (options.ClientPath != null)
+            outputFolder = Path.Combine(outputFolder, options.ClientPath);
+
+      
+        var filePath = Path.Combine(outputFolder, $"{options.ClientName}.cs");
+
+        var generator = new CSharpClientGenerator(document, settings);
+        var code = generator.GenerateFile();
+
+        Directory.CreateDirectory(outputFolder);
+        File.WriteAllText(filePath, code);
     }
 
     public async static Task GenerateTypescriptClient(this WebApplication app)
     {
-        var options = app.Configuration.GetSection("ClientGeneration")?.Get<ClientGenerationOptions>();
+        var options = app.Configuration.GetSection("ClientGeneration:TypeScript")?.Get<ClientGenerationOptions>();
         if (options?.Enabled != true)
             return;
 
@@ -84,6 +123,7 @@ public static class SwaggerConfig
         var settings = new TypeScriptClientGeneratorSettings
         {
             ClassName = "{controller}Client",
+            OperationNameGenerator = new MultipleClientsFromFirstTagAndPathSegmentsOperationNameGenerator(),
             Template = TypeScriptTemplate.Fetch,
             TypeScriptGeneratorSettings =
             {
@@ -132,4 +172,19 @@ public static class SwaggerConfig
         public bool? Extend { get; set; } = false;
 
     }
+
+    //class MinimalNameGenerator : IOperationNameGenerator
+    //{
+    //    public bool SupportsMultipleClients => throw new NotImplementedException();
+
+    //    public string GetClientName(OpenApiDocument document, string path, string httpMethod, OpenApiOperation operation)
+    //    {
+    //        return "Client";
+    //    }
+
+    //    public string GetOperationName(OpenApiDocument document, string path, string httpMethod, OpenApiOperation operation)
+    //    {
+    //        return "Client";
+    //    }
+    //}
 }

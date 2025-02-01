@@ -50,6 +50,8 @@ public static class IdentityConfig
             });
         });
 
+        app.Services.AddAuthorization();
+
 
         return app;
     }

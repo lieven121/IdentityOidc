@@ -32,36 +32,45 @@ builder.Services
 
 
 var app = builder.Build();
-
+app.UseSwagger();
+app.UseUrlsFromConfig();
+//app.UseOpenIdict();
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseAntiforgery();
 
-app.MapIdentityEndpoints();
+var apiEnpoints = app
+    .MapGroup("api")
+    .RequireAuthorization();
+apiEnpoints.MapIdentityEndpoints();
+
 app.UseVueFallbackSpa();
 
 
 
 await app.StartAsync();
 
-using (var scope = app.Services.CreateScope())
-{
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-    var userStore = scope.ServiceProvider.GetRequiredService<IUserStore<ApplicationUser>>();
-    var userEmailStore = userStore as IUserEmailStore<ApplicationUser>;
+await app.GenerateClients();
+//using (var scope = app.Services.CreateScope())
+//{
+//    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+//    var userStore = scope.ServiceProvider.GetRequiredService<IUserStore<ApplicationUser>>();
+//    var userEmailStore = userStore as IUserEmailStore<ApplicationUser>;
 
-    //await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Database.MigrateAsync();
+//    //await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Database.MigrateAsync();
 
-    if (await userManager.FindByEmailAsync("admin@localhost") == null)
-    {
-        var res = await userManager.CreateAsync(new ApplicationUser
-        {
-            UserName = "admin",
-            Email = "admin@localhost",
-            EmailConfirmed = true
-        }, "Azerty123$");
-    }
-}
+//    if (await userManager.FindByEmailAsync("admin@localhost") == null)
+//    {
+//        var res = await userManager.CreateAsync(new ApplicationUser
+//        {
+//            UserName = "admin",
+//            Email = "admin@localhost",
+//            EmailConfirmed = true
+//        }, "Azerty123$");
+//    }
+//}
 
 await app.WaitForShutdownAsync();
