@@ -1,9 +1,10 @@
 using Identity.App.Data;
+using Identity.App.EndPoints;
 using Identity.App.EndPoints.Identity;
+using Identity.App.EndPoints.OpenIdConnect;
+using Identity.App.EndPoints.Users;
 using Identity.App.Hosting;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using OpenIdict.App.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,9 +17,12 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(connectionString);
 });
 
+builder.Services
+    .AutoRegisterFromIdentityApp();
+
 builder
     .ConfigureIdentity()
-    .ConfigureOpenIdict()
+    .ConfigureOpenIddict()
     .ConfigureCors()
     .ConfigureSwagger();
 
@@ -34,21 +38,26 @@ builder.Services
 var app = builder.Build();
 app.UseSwagger();
 app.UseUrlsFromConfig();
-//app.UseOpenIdict();
 
 app.UseHttpsRedirection();
+
+app.UseOpenIddict();
+app.UseAntiforgery();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseAntiforgery();
-
 var apiEnpoints = app
-    .MapGroup("api")
-    .RequireAuthorization();
+    .MapGroup("api");
+
+
+apiEnpoints.MapStatusEndpoints();
+apiEnpoints.MapUsersEndpoints();
+
 apiEnpoints.MapIdentityEndpoints();
 
-app.UseVueFallbackSpa();
+app.MapOpenIdConnectEndpoints();
 
+app.UseVueFallbackSpa();
 
 
 await app.StartAsync();

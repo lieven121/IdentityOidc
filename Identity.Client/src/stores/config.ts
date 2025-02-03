@@ -12,6 +12,7 @@ export const useConfigStore = defineStore('config', () => {
   }
 
   function transformBaseUrl(url: string) {
+    url ??= ''
     //replace {host} with the actual host
     url = url.replace('{host}', window.location.host) //example.com:8080
     url = url.replace('{hostname}', window.location.hostname) //example.com

@@ -1,20 +1,9 @@
-﻿namespace OpenIdict.App.Hosting;
+﻿namespace Identity.App.Hosting;
 
 using Microsoft.Net.Http.Headers;
 
 public static class StaticFilesConfig
 {
-
-    public static IHostApplicationBuilder ConfigureVueStaticFiles(this IHostApplicationBuilder app)
-    {
-        //app.Services
-        //      .AddSpaStaticFiles(configuration =>
-        //      {
-        //          configuration.RootPath = "../OpenIdict.Client/dist";
-        //      });
-
-        return app;
-    }
 
     public static WebApplication UseVueStaticFiles(this WebApplication app)
     {
@@ -48,12 +37,14 @@ public static class StaticFilesConfig
 
     public static WebApplication UseVueFallbackSpa(this WebApplication app)
     {
-app.MapStaticAssets();
+        app.MapStaticAssets();
 
         if (app.Environment.IsDevelopment())
         {
             app.UseWhen(
-                context => context.GetEndpoint() == null,
+                context => context.GetEndpoint() == null 
+                && !context.Request.Path.StartsWithSegments("/api")
+                && !context.Request.Path.StartsWithSegments("/.well-known"),
                 then => then.UseSpa(spa =>
                 {
                     spa.UseProxyToSpaDevelopmentServer("http://localhost:5173/");

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using OpenIddict.Abstractions;
 using Identity.App.Data;
+using OpenIddict.Client.AspNetCore;
 
 namespace Identity.App.Hosting;
 public static class IdentityConfig
@@ -35,7 +36,7 @@ public static class IdentityConfig
             //options.ClaimsIdentity.UserNameClaimType = OpenIddictConstants.Claims.Name;
             options.ClaimsIdentity.UserIdClaimType = OpenIddictConstants.Claims.Subject;
             options.ClaimsIdentity.RoleClaimType = OpenIddictConstants.Claims.Role;
-        });
+        }); 
 
         app.Services.AddAuthentication(options =>
         {
@@ -47,8 +48,10 @@ public static class IdentityConfig
             options?.ApplicationCookie?.Configure(c =>
             {
                 c.LoginPath = "/Login";
+                //c.
             });
         });
+
 
         app.Services.AddAuthorization();
 

@@ -15,32 +15,16 @@ public static class IdentityEndpoints
             .WithTags("Identity")
             .WithName("Identity");
 
-        group.MapGet("/hi", () => "hi");
-
-        group.MapGet("/test", TestHandler)
-        .WithName("Test")
-        .AllowAnonymous();
-
-
         group.MapPost("/login", LoginHandler)
-        .WithName("Login")
-        .AllowAnonymous();
+            .WithName("Login")
+            .AllowAnonymous();
 
         group.MapPost("/logout", LogoutHandler)
-        .WithName("Logout")
-        .RequireAuthorization();
+            .WithName("Logout")
+            .RequireAuthorization();
 
 
         #region Handlers
-
-
-        IResult TestHandler(HttpContext httpContext)
-        {
-            if (httpContext.User.Identity?.IsAuthenticated != true)
-                return Results.Challenge();
-
-            return Results.Ok(httpContext.User.Identity?.Name);
-        };
 
 
         async Task<IResult> LoginHandler(
@@ -88,7 +72,7 @@ public static class IdentityEndpoints
         async Task LogoutHandler(SignInManager<ApplicationUser> signInManager)
         {
             await signInManager.SignOutAsync();
-        };
+        }
 
         #endregion
 

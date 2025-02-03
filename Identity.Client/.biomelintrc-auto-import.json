@@ -269,6 +269,7 @@
       "useTransition",
       "useUrlSearchParams",
       "useUserMedia",
+      "useUserStore",
       "useVModel",
       "useVModels",
       "useVibrate",

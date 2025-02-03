@@ -10,7 +10,7 @@ public static class CorsConfig
 
         var origins = configuration.GetSection("Cors:Origins").Get<string[]>() ?? Array.Empty<string>();
 
-        var applications = configuration.GetSection("ApplicationConfigs").Get<IEnumerable<ApplicationConfig>>();
+        var applications = configuration.GetSection("OpenIddict:ApplicationConfigs").Get<IEnumerable<ApplicationConfig>>();
         if(applications?.Any() == true)
         {
             origins = origins.Concat(
