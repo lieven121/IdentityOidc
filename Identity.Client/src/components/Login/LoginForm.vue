@@ -4,7 +4,6 @@ import {
   browserSupportsWebAuthn,
   startRegistration,
 } from '@simplewebauthn/browser'
-import Password from 'primevue/password'
 import type { ExternalLoginProvider } from './ExternalLoginProvider';
 import { ApiException, IdentityClient, LoginRequest } from '@/resources/api-clients/identity-api-client';
 
