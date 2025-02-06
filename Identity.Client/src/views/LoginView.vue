@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import logo from '@/assets/logo.svg'
 
 </script>
 
@@ -7,7 +6,7 @@ import logo from '@/assets/logo.svg'
   <div class="login-view">
     <LoginForm
       position="center"
-      :logo="logo"
+      logo="logo.svg"
     />
   </div>
 </template>
@@ -18,7 +17,7 @@ import logo from '@/assets/logo.svg'
   // --login-wrapper-color: #3338;
   // --login-wrapper-color: #fff8;
   .login-background {
-    background-image: url('@/assets/bg.png');
+    background-image: url('bg.png');
     background-repeat: no-repeat;
     background-size: cover;
     background-position: right;
