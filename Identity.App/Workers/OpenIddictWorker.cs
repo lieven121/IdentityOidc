@@ -13,39 +13,14 @@ public class OpenIddictWorker(IServiceProvider serviceProvider, IConfiguration c
 {
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        //var openIddicttSettings = new OpenIddictSettings();
-        //configuration.GetSection("OpenIddict").Bind(openIddicttSettings);
-
-        //using var scope = serviceProvider.CreateScope();
-
-        //var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        //await context.Database.EnsureCreatedAsync(cancellationToken);
-
-        //await CreateScopesAsync(scope, cancellationToken);
-        //return;
-
         using var scope = serviceProvider.CreateScope();
 
-        //scope.
+        await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>()
+            .Database
+            .MigrateAsync();
 
         await CreateApplicationsAsync(scope, cancellationToken);
-
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var userStore = scope.ServiceProvider.GetRequiredService<IUserStore<ApplicationUser>>();
-        var userEmailStore = userStore as IUserEmailStore<ApplicationUser>;
-
-        await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Database.MigrateAsync();
-
-        if (await userManager.FindByEmailAsync("admin@localhost") == null)
-        {
-            var res = await userManager.CreateAsync(new ApplicationUser
-            {
-                UserName = "admin",
-                Email = "admin@localhost",
-                EmailConfirmed = true
-            }, "Azerty123$");
-        }
-
+        await CreateUsersAsync(scope, cancellationToken);
     }
 
     private async Task CreateApplicationsAsync(IServiceScope scope, CancellationToken cancellationToken)
@@ -110,120 +85,28 @@ public class OpenIddictWorker(IServiceProvider serviceProvider, IConfiguration c
 
     }
 
-    //private async Task CreateApplicationsAsync(IServiceScope scope, CancellationToken cancellationToken)
-    //{
-    //    // ReSharper disable once AccessToDisposedClosure
-    //    var manager = scope.ServiceProvider.GetRequiredService<IOpenIddictApplicationManager>();
+    private async Task CreateUsersAsync(IServiceScope scope, CancellationToken cancellationToken)
+    {
+        var users = configuration.GetSection("OpenIddict:Users").Get<IEnumerable<UserConfig>>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var userStore = scope.ServiceProvider.GetRequiredService<IUserStore<ApplicationUser>>();
+        var userEmailStore = userStore as IUserEmailStore<ApplicationUser>;
+        foreach (var userConfig in users ?? Enumerable.Empty<UserConfig>())
+        {
+            var user = await userManager.FindByEmailAsync(userConfig.Email);
+            if (user == null)
+            {
+                user = new ApplicationUser
+                {
+                    UserName = userConfig.Username,
+                    Email = userConfig.Email,
+                    EmailConfirmed = true
+                };
+                await userManager.CreateAsync(user, userConfig.Password);
+            }
+        }
+    }
 
-    //    if (await manager.FindByClientIdAsync(openIddicttSettings.ClientId, cancellationToken) == null)
-    //    {
-    //        var descriptor = new OpenIddictApplicationDescriptor
-    //        {
-    //            ClientId = openIddicttSettings.ClientId,
-    //            DisplayName = openIddicttSettings.ClientDisplayName,
-    //            PostLogoutRedirectUris = { new Uri(new Uri(openIddicttSettings.ClientUrl), relativeUri: "/signout-oidc") },
-    //            RedirectUris = { new Uri(new Uri(openIddicttSettings.ClientUrl), relativeUri: "/signin-oidc") },
-    //            Permissions =
-    //                {
-    //                    Permissions.Endpoints.Authorization,
-    //                    Permissions.Endpoints.EndSession,
-    //                    Permissions.Endpoints.Token,
-    //                    Permissions.GrantTypes.AuthorizationCode,
-    //                    Permissions.GrantTypes.RefreshToken,
-    //                    Permissions.ResponseTypes.Code,
-    //                    //Permissions.Scopes.Email,
-    //                    //Permissions.Scopes.Profile,
-    //                    Permissions.Scopes.Roles,
-    //                    Permissions.Prefixes.Scope + openIddicttSettings.ApiScope,
-    //                    Permissions.Prefixes.Scope + Scopes.OfflineAccess,
-    //                    Permissions.Prefixes.Scope + Scopes.OpenId,
-    //                    Permissions.Prefixes.Scope + Scopes.Email,
-    //                    Permissions.Prefixes.Scope + Scopes.Profile
-    //                },
-    //            ClientType = ClientTypes.Public
-    //        };
-
-    //        await manager.CreateAsync(descriptor, cancellationToken);
-    //    }
-
-    //    if (await manager.FindByClientIdAsync(openIddicttSettings.ApiClientId, cancellationToken) == null)
-    //    {
-    //        var descriptor = new OpenIddictApplicationDescriptor
-    //        {
-    //            ClientId = openIddicttSettings.ApiClientId,
-    //            ClientSecret = openIddicttSettings.ApiSecret,
-    //            DisplayName = openIddicttSettings.ApiClientDisplayName,
-    //            Permissions =
-    //                {
-    //                    //Permissions.Endpoints.Introspection,
-    //                    Permissions.Endpoints.Token,
-    //                    Permissions.GrantTypes.ClientCredentials,
-    //                    Permissions.ResponseTypes.Token,
-    //                    Permissions.Prefixes.Scope + openIddicttSettings.ApiScope,
-    //                    Permissions.Prefixes.Scope + openIddicttSettings.IdentityScope,
-    //                },
-    //            ClientType = ClientTypes.Confidential
-    //        };
-
-    //        await manager.CreateAsync(descriptor, cancellationToken);
-    //    }
-
-    //    if (await manager.FindByClientIdAsync(openIddicttSettings.SwaggerClientId, cancellationToken) == null)
-    //    {
-    //        var descriptor = new OpenIddictApplicationDescriptor
-    //        {
-    //            ClientId = openIddicttSettings.SwaggerClientId,
-    //            ClientSecret = openIddicttSettings.SwaggerSecret,
-    //            DisplayName = openIddicttSettings.SwaggerClientDisplayName,
-    //            Permissions =
-    //                {
-    //                    //Permissions.Endpoints.Introspection,
-    //                    Permissions.Endpoints.Token,
-    //                    Permissions.GrantTypes.AuthorizationCode,
-    //                    Permissions.GrantTypes.ClientCredentials,
-    //                    Permissions.ResponseTypes.CodeIdTokenToken,
-    //                    Permissions.Prefixes.Scope + openIddicttSettings.SwaggerScope,
-    //                    Permissions.Prefixes.Scope + openIddicttSettings.IdentityScope,
-    //                    Permissions.Prefixes.Scope + openIddicttSettings.ApiScope,
-    //                },
-    //            ClientType = ClientTypes.Confidential
-    //        };
-
-    //        await manager.CreateAsync(descriptor, cancellationToken);
-    //    }
-    //}
-
-    //private async Task CreateScopesAsync(IServiceScope scope, CancellationToken cancellationToken)
-    //{
-    //    // ReSharper disable once AccessToDisposedClosure
-    //    var manager = scope.ServiceProvider.GetRequiredService<IOpenIddictScopeManager>();
-
-    //    if (await manager.FindByNameAsync(openIddicttSettings.ApiScope, cancellationToken) == null)
-    //    {
-    //        var descriptor = new OpenIddictScopeDescriptor { Name = openIddicttSettings.ApiScope, Resources = { openIddicttSettings.ApiClientId } };
-    //        await manager.CreateAsync(descriptor, cancellationToken);
-    //    }
-
-    //    if (await manager.FindByNameAsync(openIddicttSettings.IdentityScope, cancellationToken) == null)
-    //    {
-    //        var descriptor = new OpenIddictScopeDescriptor
-    //        {
-    //            Name = openIddicttSettings.IdentityScope,
-    //            Resources = { openIddicttSettings.IdentityClientId, }
-    //        };
-    //        await manager.CreateAsync(descriptor, cancellationToken);
-    //    }
-
-    //    if (await manager.FindByNameAsync(openIddicttSettings.SwaggerScope, cancellationToken) == null)
-    //    {
-    //        var descriptor = new OpenIddictScopeDescriptor
-    //        {
-    //            Name = openIddicttSettings.SwaggerScope,
-    //            Resources = { openIddicttSettings.SwaggerClientId }
-    //        };
-    //        await manager.CreateAsync(descriptor, cancellationToken);
-    //    }
-    //}
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
