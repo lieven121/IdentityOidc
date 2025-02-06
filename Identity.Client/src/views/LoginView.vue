@@ -6,7 +6,7 @@
   <div class="login-view">
     <LoginForm
       position="center"
-      logo="logo.svg"
+      logo="/images/logo.svg"
     />
   </div>
 </template>
@@ -17,7 +17,7 @@
   // --login-wrapper-color: #3338;
   // --login-wrapper-color: #fff8;
   .login-background {
-    background-image: url('bg.png');
+    background-image: url('/images/bg.jpg');
     background-repeat: no-repeat;
     background-size: cover;
     background-position: right;

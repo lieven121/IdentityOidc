@@ -94,7 +94,7 @@ public class OpenIddictWorker(IServiceProvider serviceProvider, IConfiguration c
         foreach (var userConfig in users ?? Enumerable.Empty<UserConfig>())
         {
             var user = await userManager.FindByEmailAsync(userConfig.Email);
-            if (user == null)
+            if (!string.IsNullOrWhiteSpace(userConfig.Email))
             {
                 user = new ApplicationUser
                 {
@@ -103,6 +103,7 @@ public class OpenIddictWorker(IServiceProvider serviceProvider, IConfiguration c
                     EmailConfirmed = true
                 };
                 await userManager.CreateAsync(user, userConfig.Password);
+                Console.WriteLine($"Creating user {userConfig.Email}");
             }
         }
     }

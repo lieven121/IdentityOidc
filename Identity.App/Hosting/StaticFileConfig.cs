@@ -37,38 +37,43 @@ public static class StaticFilesConfig
 
     public static WebApplication UseVueFallbackSpa(this WebApplication app)
     {
-        app.MapStaticAssets();
+        //app.MapStaticAssets();
+        app.UseStaticFiles();
 
         if (app.Environment.IsDevelopment())
         {
             app.UseWhen(
-                context => context.GetEndpoint() == null 
-                && !context.Request.Path.StartsWithSegments("/api")
-                && !context.Request.Path.StartsWithSegments("/.well-known"),
-                then => then.UseSpa(spa =>
-                {
-                    spa.UseProxyToSpaDevelopmentServer("http://localhost:5173/");
-                }));
-            return app;
-        }
-
-        app.UseSpa(c =>
-        {
-            c.Options.DefaultPageStaticFileOptions = new StaticFileOptions
+            context => context.GetEndpoint() == null
+            && !context.Request.Path.StartsWithSegments("/api")
+            && !context.Request.Path.StartsWithSegments("/.well-known"),
+            then => then.UseSpa(spa =>
             {
-                OnPrepareResponse = ctx =>
-                {
-                    var headers = ctx.Context.Response.GetTypedHeaders();
-                    headers.CacheControl = new CacheControlHeaderValue
-                    {
-                        NoCache = true,
-                        NoStore = true,
-                        MustRevalidate = true,
-                        MaxAge = TimeSpan.Zero
-                    };
-                }
-            };
-        });
+                spa.UseProxyToSpaDevelopmentServer("http://localhost:5173/");
+
+
+                //spa.Options.DefaultPageStaticFileOptions = new StaticFileOptions
+                //{
+                //    OnPrepareResponse = ctx =>
+                //        {
+                //            var headers = ctx.Context.Response.GetTypedHeaders();
+                //            headers.CacheControl = new CacheControlHeaderValue
+                //            {
+                //                NoCache = true,
+                //                NoStore = true,
+                //                MustRevalidate = true,
+                //                MaxAge = TimeSpan.Zero
+                //            };
+                //        }
+                //};
+            }));
+        }
+        else
+        {
+           
+            app.MapFallbackToFile("index.html");
+            //app.UseFileServer(fs => fs);
+
+        }
 
         return app;
     }

@@ -398,4 +398,8 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+!identity.code-workspace
+
 /identity.sqlite
+/identity.sqlite-shm
+/identity.sqlite-wal

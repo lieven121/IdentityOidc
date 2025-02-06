@@ -9,7 +9,7 @@
 
 <style lang="scss">
 .background {
-    background-image: url('bg.png');
+    background-image: url('/images/bg.jpg');
     background-repeat: no-repeat;
     background-size: cover;
     background-position: right;

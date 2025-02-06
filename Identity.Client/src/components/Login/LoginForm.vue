@@ -127,7 +127,7 @@ async function login() {
     // }
 
 
-    console.log('Logging in with name:', username.value)
+    // console.log('Logging in with name:', username.value)
   } catch (error) {
     console.error(error)
   } finally {
@@ -184,7 +184,7 @@ async function loginWithPasskey(register = false) {
 
 function loginSuccesful() {
   //redirect to ReturnUrl otherwise to home using vue router
-  console.log('Login successful')
+  // console.log('Login successful')
 
   const returnUrl = new URLSearchParams(window.location.search).get('ReturnUrl');
   if (returnUrl) {

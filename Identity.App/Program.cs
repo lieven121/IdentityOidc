@@ -34,7 +34,6 @@ builder.Services
 
 //builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
-
 var app = builder.Build();
 app.UseSwagger();
 app.UseUrlsFromConfig();

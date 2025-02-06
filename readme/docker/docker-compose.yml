@@ -1,0 +1,10 @@
+version: "3"
+services:
+  identity:
+    image: identityapp:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./appsettings.json:/app/appsettings.Production.json
+      - ./certs:/app/certs
+      - ./assets:/app/wwwroot/images
