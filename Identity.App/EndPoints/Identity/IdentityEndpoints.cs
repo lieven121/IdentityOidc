@@ -38,7 +38,7 @@ public static class IdentityEndpoints
 
             var isPersistent = true;
 
-            if (string.IsNullOrWhiteSpace(user.UserName))
+            if (string.IsNullOrWhiteSpace(user?.UserName))
             {
                 await Task.Delay(Random.Shared.Next(100, 500));
                 return Results.Unauthorized();
