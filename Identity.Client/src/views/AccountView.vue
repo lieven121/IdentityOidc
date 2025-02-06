@@ -1,9 +1,18 @@
 <script setup lang="ts">
 
+
 </script>
 
 <template>
-    <p>Account</p>
+    <AccountOverview />
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss">
+.background {
+    background-image: url('@/assets/bg.png');
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: right;
+    background-position-x: 80%;
+}
+</style>

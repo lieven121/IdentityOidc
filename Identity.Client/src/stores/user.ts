@@ -5,8 +5,14 @@ export const useUserStore = defineStore('user', () => {
   const usersClient = new UsersClient()
   const user: Ref<UserDto | null> = ref(null)
 
+  const router = useRouter()
+
   async function loadUser() {
     user.value = await usersClient.me()
+  }
+
+  async function logout() {
+    router.push('/logout')
   }
 
   const states = {
@@ -14,7 +20,7 @@ export const useUserStore = defineStore('user', () => {
     user: readonly(user),
   }
 
-  const functions = { loadUser }
+  const functions = { loadUser, logout }
 
   return { ...states, ...functions }
 })
