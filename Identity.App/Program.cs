@@ -38,7 +38,8 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseUrlsFromConfig();
 
-app.UseHttpsRedirection();
+app.UseCertificateForwarding();
+//app.UseHttpsRedirection();
 
 app.UseOpenIddict();
 app.UseAntiforgery();
