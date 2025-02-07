@@ -2,6 +2,7 @@
 
 public class OpenIddictSettingsConfig
 {
+    public bool OnlyAllowHttps { get; set; }
     public EncryptionConfig Encryption { get; set; }
     public EncryptionConfig Signing { get; set; }
 
