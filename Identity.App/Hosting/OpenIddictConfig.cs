@@ -1,4 +1,4 @@
-using Identity.App.Data;
+﻿using Identity.App.Data;
 using Quartz;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
@@ -64,11 +64,12 @@ public static class OpenIddictConfig
                 options.RegisterScopes(scopes.ToArray());
 
                 //allowed grant types
-                //options.AllowClientCredentialsFlow();
+                options.AllowClientCredentialsFlow();
                 options.AllowAuthorizationCodeFlow();
                 options.AllowRefreshTokenFlow();
                 //PKCE
                 options.RequireProofKeyForCodeExchange();
+
 
                 // Register the signing and encryption credentials.
                 //todo only dev
