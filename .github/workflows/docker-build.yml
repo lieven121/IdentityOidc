@@ -53,7 +53,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: ${{ fromJson(steps.build_info.outputs.IMAGE_TAGS) }}
+          tags: ${{ steps.build_info.outputs.IMAGE_TAGS }}
 
       # Build and push the Docker image using the tag determined above.
       # - name: Build and push Docker image
