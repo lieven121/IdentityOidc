@@ -6,11 +6,11 @@ on:
     branches:
       - dev
       - release
-      - master
+      - main
     tags:
       - "v*.*.*" # e.g. v1.2.3
   pull_request:
-    branches: ["master", "dev"]
+    branches: ["main", "dev"]
 
 env:
   REGISTRY: ghcr.io
