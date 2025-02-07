@@ -46,7 +46,7 @@ jobs:
           GITHUB_OUTPUT: $GITHUB_OUTPUT
 
       - name: test result
-        run: echo ${{ steps.build_info.outputs.IMAGE_TAGS }} && echo ${{ fromJson(steps.build_info.outputs.IMAGE_TAGS) }}
+        run: echo ${{ steps.build_info.outputs.IMAGE_TAGS }}
 
       - name: Extract Docker metadata
         id: meta
