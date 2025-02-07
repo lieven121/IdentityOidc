@@ -51,7 +51,6 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: ${{ steps.build_info.outputs.IMAGE_TAG }}
-          sep-tags: ","
 
       # Build and push the Docker image using the tag determined above.
       # - name: Build and push Docker image
@@ -60,7 +59,8 @@ jobs:
       #     context: .
       #     file: ./Identity.App/Dockerfile
       #     push: ${{ github.event_name != 'pull_request' }}
-      #     tags: ${{ steps.build_info.outputs.IMAGE_TAG }}
+      # #     tags: ${{ steps.build_info.outputs.IMAGE_TAG }}
+      #     tags: ${{ steps.meta.outputs.tags }}
       #     labels: ${{ steps.meta.outputs.labels }}
       #     cache-from: type=gha
       #     cache-to: type=gha,mode=max
