@@ -25,7 +25,9 @@ builder
     .ConfigureIdentity()
     .ConfigureOpenIddict()
     .ConfigureCors()
-    .ConfigureSwagger();
+    .ConfigureSwagger()
+    .ConfigureReverseProxySupport();
+
 
 builder.Services
     .AddAntiforgery();
@@ -33,10 +35,7 @@ builder.Services
 builder.Services
     .AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.Configure<ForwardedHeadersOptions>(options =>
-{
-    options.ForwardedHeaders = ForwardedHeaders.XForwardedProto;
-});
+
 
 //builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
@@ -44,9 +43,8 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseUrlsFromConfig();
 
-app.UseCertificateForwarding();
-//app.UseHttpsRedirection();
 
+app.UseReverseProxySupport();
 app.UseOpenIddict();
 app.UseAntiforgery();
 app.UseAuthentication();
