@@ -50,16 +50,17 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: ${{ steps.build_info.outputs.IMAGE_TAG }}
+          labels: ${{ steps.build_info.outputs.IMAGE_TAG }}
+          sep-labels: ","
 
       # Build and push the Docker image using the tag determined above.
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./Identity.App/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.build_info.outputs.IMAGE_TAG }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      # - name: Build and push Docker image
+      #   uses: docker/build-push-action@v6
+      #   with:
+      #     context: .
+      #     file: ./Identity.App/Dockerfile
+      #     push: ${{ github.event_name != 'pull_request' }}
+      #     tags: ${{ steps.build_info.outputs.IMAGE_TAG }}
+      #     labels: ${{ steps.meta.outputs.labels }}
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
