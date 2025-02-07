@@ -10,7 +10,7 @@ IMAGE_TAG_ALT=''
     IMAGE_TAG_ALT='type=raw,value=dev,enable=true'
     echo "Dev branch detected. Using image tag: ${IMAGE_TAG}"
 
-  elif [ "$BRANCH_NAME" == "release*" ]; then
+  elif [ "$BRANCH_NAME" == "release" ]; then
     # Ensure that a tag is present
     if git diff-tree --no-commit-id --name-only -r HEAD | grep -q '^VERSION'; then
       echo "VERSION file was updated in this commit."
