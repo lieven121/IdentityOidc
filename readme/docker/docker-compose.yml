@@ -1,9 +1,10 @@
 version: "3"
 services:
   identity:
-    image: identityapp:latest
+    image: ghcr.io/lieven121/identityoidc:latest
     ports:
-      - "8080:8080"
+      - "8080:80"
+      # - "8443:443"
     volumes:
       - ./appsettings.json:/app/appsettings.Production.json
       - ./certs:/app/certs
