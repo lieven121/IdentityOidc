@@ -1,6 +1,15 @@
 {
   "folders": [
     {
+      "name": ".github",
+      "path": ".github"
+    },
+    {
+      "name": "readme",
+      "path": "readme"
+    },
+    {
+      "name": "Identity.Client",
       "path": "Identity.Client"
     }
   ]
