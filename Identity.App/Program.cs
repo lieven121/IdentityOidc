@@ -4,6 +4,7 @@ using Identity.App.EndPoints.Identity;
 using Identity.App.EndPoints.OpenIdConnect;
 using Identity.App.EndPoints.Users;
 using Identity.App.Hosting;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,6 +32,11 @@ builder.Services
 
 builder.Services
     .AddDatabaseDeveloperPageExceptionFilter();
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedProto;
+});
 
 //builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
