@@ -96,12 +96,19 @@ public class OpenIddictWorker(IServiceProvider serviceProvider, IConfiguration c
             var user = await userManager.FindByEmailAsync(userConfig.Email);
             if (!string.IsNullOrWhiteSpace(userConfig.Email))
             {
+
+
                 user = new ApplicationUser
                 {
                     UserName = userConfig.Username,
                     Email = userConfig.Email,
                     EmailConfirmed = true
                 };
+                if (string.IsNullOrWhiteSpace(userConfig.Password))
+                {
+                    userConfig.Password = Guid.NewGuid().ToString();
+                    Console.WriteLine($"Creating user {userConfig.Email} with password '{userConfig.Password}'");
+                }
                 await userManager.CreateAsync(user, userConfig.Password);
                 Console.WriteLine($"Creating user {userConfig.Email}");
             }
