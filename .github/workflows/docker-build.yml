@@ -9,6 +9,9 @@ on:
       - master
     tags:
       - "v*.*.*" # e.g. v1.2.3
+  pull_request:
+    branches: ["master", "dev"]
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
@@ -34,12 +37,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-
       - name: Determine build target and image tag
         id: build_info
         run: chmod +x ./.github/scripts/determine-build-target.sh && ./.github/scripts/determine-build-target.sh
@@ -47,6 +44,13 @@ jobs:
           GITHUB_REF: ${{ github.ref }}
           GITHUB_SHA: ${{ github.sha }}
           GITHUB_OUTPUT: $GITHUB_OUTPUT
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: ${{ steps.build_info.outputs.IMAGE_TAG }}
 
       # Build and push the Docker image using the tag determined above.
       - name: Build and push Docker image
