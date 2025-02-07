@@ -45,12 +45,16 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
           GITHUB_OUTPUT: $GITHUB_OUTPUT
 
+      - name: test result
+        run: echo ${{ steps.build_info.outputs.IMAGE_TAG }}
+
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: ${{ steps.build_info.outputs.IMAGE_TAG }}
+          tags: |
+            type=raw,value=latest,enable=true
 
       # Build and push the Docker image using the tag determined above.
       # - name: Build and push Docker image
