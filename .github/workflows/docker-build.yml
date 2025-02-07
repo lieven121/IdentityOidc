@@ -42,7 +42,7 @@ jobs:
 
       - name: Determine build target and image tag
         id: build_info
-        run: ./.github/scripts/determine-build-target.sh
+        run: chmod +x ./.github/scripts/determine-build-target.sh && ./.github/scripts/determine-build-target.sh
         env:
           GITHUB_REF: ${{ github.ref }}
           GITHUB_SHA: ${{ github.sha }}
@@ -55,4 +55,7 @@ jobs:
           context: .
           file: ./Identity.App/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.build_info.outputs.IMAGE_TAG }}
+          tags: ${{ steps.build_info.outputs.IMAGE_TAG }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
