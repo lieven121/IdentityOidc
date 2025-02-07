@@ -5,7 +5,7 @@ IMAGE_TAGS=()
   BRANCH_NAME="${GITHUB_REF#refs/heads/}"
   if [ "$BRANCH_NAME" == "dev" ]; then
     DATE_TAG=$(date +%Y-%m-%d-%H-%M)
-    IMAGE_TAGS='["type=raw,value=dev-'${DATE_TAG}',enable=true", "type=raw,value=dev,enable=true"]'
+    IMAGE_TAGS='type=raw,value=dev-'${DATE_TAG}',enable=true type=raw,value=dev,enable=true'
     echo "Dev branch detected. Using image tag: ${IMAGE_TAGS}"
 
   elif [ "$BRANCH_NAME" == "release" ]; then
@@ -13,7 +13,7 @@ IMAGE_TAGS=()
     if git diff-tree --no-commit-id --name-only -r HEAD | grep -q '^VERSION'; then
       echo "VERSION file was updated in this commit."
       VERSION=$(cat VERSION)
-      IMAGE_TAGS='["type=raw,value='${VERSION}'-rc,enable=true", "type=raw,value=latest-rc,enable=true"]'
+      IMAGE_TAGS='type=raw,value='${VERSION}'-rc,enable=true type=raw,value=latest-rc,enable=true'
       echo "RC branch detected. Using image tag: ${IMAGE_TAGS}"
     else
       echo "ERROR: VERSION file not updated on RC branch or no tag present. Aborting build."
@@ -25,7 +25,7 @@ IMAGE_TAGS=()
     if git diff-tree --no-commit-id --name-only -r HEAD | grep -q '^VERSION'; then
       echo "VERSION file was updated in this commit."
       VERSION=$(cat VERSION)
-      IMAGE_TAGS='["type=raw,value='${VERSION}',enable=true", "type=raw,value=latest,enable=true"]'
+      IMAGE_TAGS='type=raw,value='${VERSION}',enable=true type=raw,value=latest,enable=true'
       echo "Release branch detected. Using image tag: ${IMAGE_TAGS}"
     else
       echo "ERROR: VERSION file not updated on release branch or no tag present. Aborting build."
