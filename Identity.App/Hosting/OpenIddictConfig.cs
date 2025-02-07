@@ -1,4 +1,4 @@
-﻿using Identity.App.Data;
+using Identity.App.Data;
 using Quartz;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
@@ -119,12 +119,16 @@ public static class OpenIddictConfig
                 }
               
 
-                options.UseAspNetCore()
+                var aspBuilder = options.UseAspNetCore()
                        .EnableAuthorizationEndpointPassthrough()
                        .EnableTokenEndpointPassthrough()
                        .EnableEndSessionEndpointPassthrough()
                        .EnableUserInfoEndpointPassthrough();
 
+                if(openIddictSettings?.OnlyAllowHttps != true)
+                {
+                    aspBuilder.DisableTransportSecurityRequirement();
+                }
 
             });
             //.AddValidation(options =>
