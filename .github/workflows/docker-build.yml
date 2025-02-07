@@ -30,6 +30,7 @@ jobs:
       # Check out the code so we can access the Dockerfile and version file.
       - name: Checkout repository
         uses: actions/checkout@v4
+      - run: git fetch --prune --unshallow --tags
 
       # Set up Docker Buildx (a tool for building multi-platform images)
       - name: Set up Docker Buildx
