@@ -20,6 +20,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
     steps:
       # Check out the code so we can access the Dockerfile and version file.
       - name: Checkout repository
