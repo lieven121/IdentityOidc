@@ -107,6 +107,8 @@ public class OpenIddictWorker(IServiceProvider serviceProvider, IConfiguration c
                 if (string.IsNullOrWhiteSpace(userConfig.Password))
                 {
                     userConfig.Password = Guid.NewGuid().ToString();
+                    //add 3 random upper case letters
+                    userConfig.Password += new string(Enumerable.Range(0, 3).Select(_ => (char)Random.Shared.Next('A', 'Z')).ToArray());
                     Console.WriteLine($"Creating user {userConfig.Email} with password '{userConfig.Password}'");
                 }
                 await userManager.CreateAsync(user, userConfig.Password);
