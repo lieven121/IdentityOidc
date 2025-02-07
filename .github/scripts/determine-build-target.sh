@@ -18,7 +18,7 @@ else
     if git diff-tree --no-commit-id --name-only -r HEAD | grep -q '^VERSION'; then
       echo "VERSION file was updated in this commit."
       VERSION=$(cat VERSION)
-      IMAGE_TAG="${VERSION}"
+      IMAGE_TAG="${VERSION},latest"
       echo "Release branch detected. Using image tag: ${IMAGE_TAG}"
     else
       echo "ERROR: VERSION file not updated on release branch or no tag present. Aborting build."
@@ -29,7 +29,7 @@ else
     if git diff-tree --no-commit-id --name-only -r HEAD | grep -q '^VERSION'; then
       echo "VERSION file was updated in this commit."
       VERSION=$(cat VERSION)
-      IMAGE_TAG="rc-${VERSION}"
+      IMAGE_TAG="rc-${VERSION},latest-rc"
       echo "RC branch detected. Using image tag: ${IMAGE_TAG}"
     else
       echo "ERROR: VERSION file not updated on RC branch or no tag present. Aborting build."
