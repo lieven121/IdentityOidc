@@ -6,6 +6,7 @@ on:
     branches:
       - dev
       - release
+      - release/**
       - main
     tags:
       - "v*.*.*" # e.g. v1.2.3
