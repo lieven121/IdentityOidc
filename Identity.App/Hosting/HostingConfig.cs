@@ -40,7 +40,10 @@ public static class HostingConfig
         var rProxySupport = app.Configuration.GetSection("Hosting:ReverseProxySupport")?.Get<bool>() != false;
 
         if(rProxySupport)
+        {
             app.UseCertificateForwarding();
+            app.UseForwardedHeaders();
+        }
 
         var assumeEveryRequestHttps = app.Configuration.GetSection("Hosting:AssumeEveryRequestHttps")?.Get<bool>() == true;
         if (assumeEveryRequestHttps)
