@@ -230,7 +230,7 @@ onMounted(() => {
                 @keydown.enter="login"
                 @focusout="triggerPassword"
               ></InputText>
-              <label for="UsernameInput">Username</label>
+              <label for="UsernameInput">Email</label>
             </div>
 
             <div
