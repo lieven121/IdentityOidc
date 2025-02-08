@@ -10,8 +10,8 @@ on:
       - main
     tags:
       - "v*.*.*" # e.g. v1.2.3
-  pull_request:
-    branches: ["main", "dev"]
+  # pull_request:
+  #   branches: ["main", "dev"]
 
 env:
   REGISTRY: ghcr.io
