@@ -68,8 +68,8 @@ public static class OpenIdConnectEndpoints
             var result = await httpContext.AuthenticateAsync(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
             if (result.Succeeded)
             {
-                var principal = result.Principal;
-                return Results.SignIn(principal, authenticationScheme: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+                var tokenPrincipal = result.Principal;
+                return Results.SignIn(tokenPrincipal, authenticationScheme: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
             }
         }
 
