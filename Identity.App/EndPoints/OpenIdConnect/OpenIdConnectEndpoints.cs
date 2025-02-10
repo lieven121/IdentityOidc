@@ -63,9 +63,18 @@ public static class OpenIdConnectEndpoints
         var user = httpContext.User;
         var request = httpContext.GetOpenIddictServerRequest();
 
+        if (request.IsAuthorizationCodeGrantType() || request.IsRefreshTokenGrantType())
+        {
+            var result = await httpContext.AuthenticateAsync(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+            if (result.Succeeded)
+            {
+                var tokenPrincipal = result.Principal;
+                return Results.SignIn(tokenPrincipal, authenticationScheme: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+            }
+        }
+
         if (user.Identity?.IsAuthenticated != true)
             return Results.Challenge();
-
 
         var claims = new List<Claim>
             {
@@ -76,7 +85,6 @@ public static class OpenIdConnectEndpoints
 
         var appUser = await userManager.GetUserAsync(user) ??
                    throw new Exception();
-
 
         var principal = await signInManager.CreateUserPrincipalAsync(appUser);
 
