@@ -44,6 +44,7 @@ watch(() => userStore.user, (newUser) => {
                             type="submit"
                             class="button-wide"
                             severity="success"
+                            :loading="userStore.isLoading"
                             @click="userStore.updateUser(user)"
                         >
                             Update</Button>
