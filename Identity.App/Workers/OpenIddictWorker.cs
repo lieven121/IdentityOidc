@@ -61,6 +61,12 @@ public class OpenIddictWorker(IServiceProvider serviceProvider, IConfiguration c
                     ClientSecret = string.IsNullOrWhiteSpace(applicationConfig.ClientSecret) ? null : applicationConfig.ClientSecret,
 
                 };
+
+                if(app.ClientType == ClientTypes.Confidential)
+                {
+                    app.Permissions.Add(Permissions.GrantTypes.ClientCredentials);
+                }
+
                 if(applicationConfig.PKCE)
                 {
                     app.Requirements.Add(Requirements.Features.ProofKeyForCodeExchange);
