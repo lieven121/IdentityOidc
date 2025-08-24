@@ -112,6 +112,10 @@ public static class SwaggerConfig
         var settings = new CSharpClientGeneratorSettings
         {
             ClassName = "{controller}Client",
+            CSharpGeneratorSettings =
+            {
+              Namespace = "IdentityOidc.API"
+            },
             ClientBaseClass = "ClientBase",
             GenerateClientClasses = true,
             GenerateClientInterfaces = false,
