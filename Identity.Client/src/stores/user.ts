@@ -16,7 +16,6 @@ export const useUserStore = defineStore('user', () => {
   }
 
   async function updateUser(updatedUser: UserDto) {
-    console.log('Updating user:', updatedUser)
     user.value = await usersClient.updateUser(updatedUser)
   }
 
