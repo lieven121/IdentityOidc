@@ -1,8 +1,13 @@
 <script setup lang="ts">
+import { UserDto } from '@/resources/api-clients/identity-api-client';
+
 
 const userStore = useUserStore()
 
-const user = userStore.user;
+const user = ref<UserDto>()
+watch(() => userStore.user, (newUser) => {
+    user.value = new UserDto({ ...newUser });
+}, { immediate: true });
 
 </script>
 
@@ -27,10 +32,10 @@ const user = userStore.user;
                             />
                         </div>
                         <div class="input-label">
-                            <label for="email">Username</label>
+                            <label for="username">Username</label>
                             <InputText
-                                id="email"
-                                :value="user.userName"
+                                id="username"
+                                v-model="user.userName"
                             />
                         </div>
                     </div>
@@ -39,7 +44,7 @@ const user = userStore.user;
                             type="submit"
                             class="button-wide"
                             severity="success"
-                            disabled
+                            @click="userStore.updateUser(user)"
                         >
                             Update</Button>
                     </div>
@@ -58,8 +63,15 @@ const user = userStore.user;
             <!-- <p>Email: {{ user.email }}</p>
         <p>Joined: {{ new Date(user.joinedDate).toLocaleDateString() }}</p> -->
         </div>
-        <div v-else>
+        <div
+            v-else
+            class="wrapper"
+        >
             <p>Loading...</p>
+            <Skeleton
+                width="20rem"
+                height="2rem"
+            />
         </div>
     </div>
 
