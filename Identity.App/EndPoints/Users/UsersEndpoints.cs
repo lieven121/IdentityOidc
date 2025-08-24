@@ -56,7 +56,7 @@ public static class UsersEndpoints
         if (user is null)
             return TypedResults.Forbid();
 
-        if (string.IsNullOrWhiteSpace(updateUserDto.Username))
+        if (!string.IsNullOrWhiteSpace(updateUserDto.Username))
         {
             user.UserName = updateUserDto.Username;
         }
