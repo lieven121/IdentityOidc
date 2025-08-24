@@ -23,3 +23,4 @@ public class CertConfig
     public int ValidityMonths { get; set; }
     public string Issuer { get; set; } = "OpenIddict";
 }
+

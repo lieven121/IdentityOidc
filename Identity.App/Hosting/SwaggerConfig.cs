@@ -5,6 +5,9 @@ using NSwag.CodeGeneration.TypeScript;
 using NSwag.Generation.Processors.Security;
 using NSwag.CodeGeneration.CSharp;
 using NSwag.CodeGeneration.OperationNameGenerators;
+using NSwag.Generation.Processors.Contexts;
+using NSwag.Generation.Processors;
+using NSwag.Generation.AspNetCore;
 
 namespace Identity.App.Hosting;
 public static class SwaggerConfig
@@ -21,6 +24,34 @@ public static class SwaggerConfig
         //services.AddSwaggerGen();
         services.AddOpenApiDocument(options =>
         {
+            options.AddOperationFilter(context =>
+            {
+
+                if (context is AspNetCoreOperationProcessorContext asp)
+                {
+                    var apiDesc = asp.ApiDescription;
+
+                    var endpointName = apiDesc.ActionDescriptor?.EndpointMetadata?
+                        .OfType<IEndpointNameMetadata>()
+                        .LastOrDefault()?.EndpointName;
+
+                    endpointName ??= apiDesc.ActionDescriptor?.AttributeRouteInfo?.Name;
+
+
+                    if (!string.IsNullOrEmpty(endpointName))
+                    {
+                        //context.Document.
+                        context.OperationDescription.Operation.OperationId = endpointName;
+                    }
+
+                }
+                else
+                    return false;
+                return true;
+            });
+
+            //options.Name
+
             //options.AddSecurity("token", new OpenApiSecurityScheme
             //{
             //    In = OpenApiSecurityApiKeyLocation.Header,
@@ -87,6 +118,8 @@ public static class SwaggerConfig
             GenerateOptionalParameters = true,
         };
 
+        settings.OperationNameGenerator = new MultipleClientsFromFirstTagAndOperationNameGenerator();
+
         var outputFolder = Environment.CurrentDirectory;
         if (options.ClientPath != null)
             outputFolder = Path.Combine(outputFolder, options.ClientPath);
@@ -142,6 +175,8 @@ public static class SwaggerConfig
             UseTransformResultMethod = true,
         };
 
+        settings.OperationNameGenerator = new MultipleClientsFromFirstTagAndOperationNameGenerator();
+
         var outputFolder = Environment.CurrentDirectory;
         if (options.ClientPath != null)
             outputFolder = Path.Combine(outputFolder, options.ClientPath);
@@ -175,16 +210,17 @@ public static class SwaggerConfig
 
     //class MinimalNameGenerator : IOperationNameGenerator
     //{
-    //    public bool SupportsMultipleClients => throw new NotImplementedException();
+    //    public bool SupportsMultipleClients => false;
 
     //    public string GetClientName(OpenApiDocument document, string path, string httpMethod, OpenApiOperation operation)
     //    {
-    //        return "Client";
+    //        return operation.Tags?.FirstOrDefault() ?? "DefaultClient";
     //    }
 
     //    public string GetOperationName(OpenApiDocument document, string path, string httpMethod, OpenApiOperation operation)
     //    {
-    //        return "Client";
+    //        return operation.OperationId;
     //    }
     //}
+
 }

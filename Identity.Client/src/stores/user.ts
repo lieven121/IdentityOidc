@@ -8,11 +8,16 @@ export const useUserStore = defineStore('user', () => {
   const router = useRouter()
 
   async function loadUser() {
-    user.value = await usersClient.me()
+    user.value = await usersClient.currentUser()
   }
 
   async function logout() {
     router.push('/logout')
+  }
+
+  async function updateUser(updatedUser: UserDto) {
+    console.log('Updating user:', updatedUser)
+    user.value = await usersClient.updateUser(updatedUser)
   }
 
   const states = {
@@ -20,7 +25,7 @@ export const useUserStore = defineStore('user', () => {
     user: readonly(user),
   }
 
-  const functions = { loadUser, logout }
+  const functions = { loadUser, logout, updateUser }
 
   return { ...states, ...functions }
 })
