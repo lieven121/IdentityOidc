@@ -23,7 +23,7 @@ public static class ExternalEndpoints
 
             .RequireAuthorization(policy =>
             {
-                policy.AddAuthenticationSchemes(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+                policy.AddAuthenticationSchemes(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
                 policy.RequireAuthenticatedUser();
                 policy.RequireClaim("scope", Scopes.Admin);
             }

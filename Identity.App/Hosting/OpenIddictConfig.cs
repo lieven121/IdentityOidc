@@ -131,22 +131,22 @@ public static class OpenIddictConfig
                     aspBuilder.DisableTransportSecurityRequirement();
                 }
 
+            })
+            .AddValidation(options =>
+            {
+                // Note: the validation handler uses OpenID Connect discovery
+                // to retrieve the address of the introspection endpoint.
+                //options.SetClientId(openIddictSettings.IdentityClientId);
+
+                // Import the configuration from the local OpenIddict server instance.
+                options.UseLocalServer();
+
+                // Register the System.Net.Http. integration
+                options.UseSystemNetHttp();
+
+                // Register the ASP.NET Core host.
+                options.UseAspNetCore();
             });
-            //.AddValidation(options =>
-            //{
-            //    // Note: the validation handler uses OpenID Connect discovery
-            //    // to retrieve the address of the introspection endpoint.
-            //    //options.SetClientId(openIddictSettings.IdentityClientId);
-
-            //    // Import the configuration from the local OpenIddict server instance.
-            //    options.UseLocalServer();
-
-            //    // Register the System.Net.Http. integration
-            //    options.UseSystemNetHttp();
-
-            //    // Register the ASP.NET Core host.
-            //    options.UseAspNetCore();
-            //});
 
 
 
