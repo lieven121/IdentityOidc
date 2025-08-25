@@ -28,67 +28,83 @@ public class OpenIddictWorker(IServiceProvider serviceProvider, IConfiguration c
         var applications = configuration.GetSection("OpenIddict:ApplicationConfigs").Get<IEnumerable<ApplicationConfig>>();
 
         var manager = scope.ServiceProvider.GetRequiredService<IOpenIddictApplicationManager>();
+
+        var scopeManager = scope.ServiceProvider.GetRequiredService<IOpenIddictScopeManager>();
         foreach (var applicationConfig in applications)
         {
             var client = await manager.FindByClientIdAsync(applicationConfig.ClientId, cancellationToken);
             if(client != null)
             {
                 await manager.DeleteAsync(client);
-                client = null;
             }
 
-            if (client == null)
+            var app = new OpenIddictApplicationDescriptor
             {
-                var app = new OpenIddictApplicationDescriptor
+                ClientId = applicationConfig.ClientId,
+                DisplayName = applicationConfig.Name,
+                Permissions =
                 {
-                    ClientId = applicationConfig.ClientId,
-                    DisplayName = applicationConfig.Name,
-                    Permissions =
-                    {
-                        Permissions.Endpoints.Authorization,
-                        Permissions.Endpoints.EndSession,
-                        Permissions.Endpoints.Token,
-                        Permissions.GrantTypes.AuthorizationCode,
-                        Permissions.GrantTypes.RefreshToken,
-                        Permissions.ResponseTypes.Code,
-                        Permissions.Scopes.Email,
-                        Permissions.Scopes.Profile,
-                        Permissions.Scopes.Roles,
-                        Permissions.Prefixes.Scope + applicationConfig.Scope,
-                        Permissions.Prefixes.Scope + Scopes.OfflineAccess,
-                    },
-                    ClientType = string.IsNullOrWhiteSpace(applicationConfig.ClientSecret) ? ClientTypes.Public : ClientTypes.Confidential,
-                    ClientSecret = string.IsNullOrWhiteSpace(applicationConfig.ClientSecret) ? null : applicationConfig.ClientSecret,
+                    Permissions.Endpoints.Authorization,
+                    Permissions.Endpoints.EndSession,
+                    Permissions.Endpoints.Token,
+                    Permissions.GrantTypes.AuthorizationCode,
+                    Permissions.GrantTypes.RefreshToken,
+                    Permissions.ResponseTypes.Code,
+                    Permissions.Scopes.Email,
+                    Permissions.Scopes.Profile,
+                    Permissions.Scopes.Roles,
+                    Permissions.Prefixes.Scope + applicationConfig.Scope,
+                    Permissions.Prefixes.Scope + Scopes.OfflineAccess,
+                },
+                ClientType = string.IsNullOrWhiteSpace(applicationConfig.ClientSecret) ? ClientTypes.Public : ClientTypes.Confidential,
+                ClientSecret = string.IsNullOrWhiteSpace(applicationConfig.ClientSecret) ? null : applicationConfig.ClientSecret,
+                
+            };
 
-                };
-
-                if(app.ClientType == ClientTypes.Confidential)
-                {
-                    app.Permissions.Add(Permissions.GrantTypes.ClientCredentials);
-                    app.Permissions.Add(Permissions.ResponseTypes.Token);
-                    app.Permissions.Remove(Permissions.GrantTypes.AuthorizationCode);
-                }
-
-                if(applicationConfig.PKCE)
-                {
-                    app.Requirements.Add(Requirements.Features.ProofKeyForCodeExchange);
-                }
-                if(applicationConfig.RedirectUri != null)
-                    foreach (var uri in applicationConfig.RedirectUri)
-                    {
-                        app.RedirectUris.Add(new Uri(uri));
-                    }
-
-                if (applicationConfig.PostLogoutRedirectUri != null)
-                    foreach (var uri in applicationConfig.PostLogoutRedirectUri)
-                    {
-                        app.PostLogoutRedirectUris.Add(new Uri(uri));
-                    }
-
-
-                await manager.CreateAsync(app, cancellationToken);
+            if(app.ClientType == ClientTypes.Confidential)
+            {
+                app.Permissions.Add(Permissions.GrantTypes.ClientCredentials);
+                app.Permissions.Add(Permissions.ResponseTypes.Token);
+                app.Permissions.Remove(Permissions.GrantTypes.AuthorizationCode);
             }
 
+            if(applicationConfig.PKCE)
+            {
+                app.Requirements.Add(Requirements.Features.ProofKeyForCodeExchange);
+            }
+            if(applicationConfig.RedirectUri != null)
+                foreach (var uri in applicationConfig.RedirectUri)
+                {
+                    app.RedirectUris.Add(new Uri(uri));
+                }
+
+            if (applicationConfig.PostLogoutRedirectUri != null)
+                foreach (var uri in applicationConfig.PostLogoutRedirectUri)
+                {
+                    app.PostLogoutRedirectUris.Add(new Uri(uri));
+                }
+
+
+            await manager.CreateAsync(app, cancellationToken);
+
+            //Scopes
+
+            //var dbScope = await scopeManager.FindByNameAsync(Permissions.Prefixes.Scope + applicationConfig.Scope, cancellationToken);
+            //if(dbScope != null)
+            //{
+            //    await scopeManager.DeleteAsync(dbScope, cancellationToken);
+            //}
+
+            //var scopeDescriptor = new OpenIddictScopeDescriptor
+            //{
+            //    Name = applicationConfig.Scope,
+            //    DisplayName = applicationConfig.Scope,
+            //    Resources =
+            //    {
+            //        applicationConfig.ClientId
+            //    }
+            //};
+            //await scopeManager.CreateAsync(scopeDescriptor, cancellationToken);
         }
 
     }
