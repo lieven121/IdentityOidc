@@ -4,6 +4,7 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
 using System.Net.Http;
@@ -110,17 +111,52 @@ public static class OpenIdConnectEndpoints
         return Results.SignIn(principal, authenticationScheme: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
     }
 
-    private static async Task<IResult> TokenHandler(HttpContext httpContext)
+    private static async Task<IResult> TokenHandler(HttpContext httpContext, IOpenIddictApplicationManager applicationManager, IOpenIddictScopeManager scopeManager)
     {
         var request = httpContext.GetOpenIddictServerRequest();
         var result = await httpContext.AuthenticateAsync(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
         var principal = result.Principal;
 
 
-        if (
+
+        if (request.IsClientCredentialsGrantType())
+        {
+            var application = await applicationManager.FindByClientIdAsync(request.ClientId)?? throw new InvalidOperationException("Missing client_id");
+
+            // Create a principal for the client
+            var identity = new ClaimsIdentity(
+                authenticationType: TokenValidationParameters.DefaultAuthenticationType,
+                nameType: Claims.Name,
+                roleType: Claims.Role);
+
+            // Add the client_id claim
+            identity.SetClaim(Claims.Subject, request.ClientId);
+            identity.SetClaim(Claims.ClientId, request.ClientId);
+            identity.SetClaim(Claims.Name, await applicationManager.GetDisplayNameAsync(application));
+
+            // Optionally add roles, scopes, or custom claims for this client
+            // e.g. identity.SetClaim("role", "api_service");
+
+            //set lifetime
+            //identity.SetAccessTokenLifetime(TimeSpan.FromHours(1));
+
+            // Mark which scopes were granted (important for resource APIs)
+            identity.SetScopes(request.GetScopes());
+            identity.SetResources(await scopeManager.ListResourcesAsync(identity.GetScopes()).ToListAsync());
+
+            // Store destinations so claims end up in tokens
+            identity.SetDestinations(static claim => claim.Type switch
+            {
+                Claims.Name or Claims.Subject or Claims.ClientId => new[] { Destinations.AccessToken },
+                _ => Array.Empty<string>()
+            });
+
+            principal = new ClaimsPrincipal(identity);
+        }
+        else if(
             !(
-                request.IsAuthorizationCodeGrantType() ||
-                request.IsRefreshTokenGrantType()
+            request.IsAuthorizationCodeGrantType() ||
+            request.IsRefreshTokenGrantType()
             ))
         {
             principal = null;
