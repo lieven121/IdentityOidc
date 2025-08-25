@@ -42,7 +42,22 @@ public static class HostingConfig
         if(rProxySupport)
         {
             app.UseCertificateForwarding();
-            app.UseForwardedHeaders();
+            var forwardedHeaderOptions = new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+            };
+            forwardedHeaderOptions.KnownNetworks.Clear();
+            forwardedHeaderOptions.KnownProxies.Clear();
+            var ips = app.Configuration.GetSection("Hosting:ReverseProxySupport")?.Get<string[]?>();
+            if (ips != null)
+            {
+                foreach (var ip in ips)
+                {
+                    if (System.Net.IPAddress.TryParse(ip, out var address))
+                        forwardedHeaderOptions.KnownProxies.Add(address);
+                }
+            }
+            app.UseForwardedHeaders(forwardedHeaderOptions);
         }
 
         var assumeEveryRequestHttps = app.Configuration.GetSection("Hosting:AssumeEveryRequestHttps")?.Get<bool>() == true;
