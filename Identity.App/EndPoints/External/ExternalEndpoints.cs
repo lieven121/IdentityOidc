@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OpenIddict.Server.AspNetCore;
+using OpenIddict.Validation.AspNetCore;
 using UpdateUserDto = Identity.App.EndPoints.External.Models.UpdateUserDto;
 
 namespace Identity.App.EndPoints.External;
@@ -25,7 +25,7 @@ public static class ExternalEndpoints
             {
                 policy.AddAuthenticationSchemes(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
                 policy.RequireAuthenticatedUser();
-                policy.RequireClaim("scope", Scopes.Admin);
+                policy.RequireClaim("oi_scp", Scopes.Admin);
             }
             );
 
@@ -99,8 +99,8 @@ public static class ExternalEndpoints
 
 
     private static async Task<Results<Ok<ResultPage<UserDto>>, ForbidHttpResult>> GetUsersHandler(
-    [FromServices] HttpContext httpContext,
-    [FromServices] UserManager<ApplicationUser> userManager
+    HttpContext httpContext,
+    UserManager<ApplicationUser> userManager
     )
     {
         return await GetUsersHandlerSearch(
@@ -112,8 +112,8 @@ public static class ExternalEndpoints
 
     private static async Task<Results<Ok<ResultPage<UserDto>>, ForbidHttpResult>> GetUsersHandlerSearch(
         [FromBody] UsersFilter? filter,
-        [FromServices] HttpContext httpContext,
-        [FromServices] UserManager<ApplicationUser> userManager
+        HttpContext httpContext,
+        UserManager<ApplicationUser> userManager
         )
     {
         var qry = userManager.Users.AsQueryable();
