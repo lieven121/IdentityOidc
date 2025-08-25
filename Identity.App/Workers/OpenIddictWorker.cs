@@ -30,6 +30,9 @@ public class OpenIddictWorker(IServiceProvider serviceProvider, IConfiguration c
         var manager = scope.ServiceProvider.GetRequiredService<IOpenIddictApplicationManager>();
 
         var scopeManager = scope.ServiceProvider.GetRequiredService<IOpenIddictScopeManager>();
+        var scopeDictionary = new Dictionary<string, OpenIddictScopeDescriptor>();
+
+
         foreach (var applicationConfig in applications)
         {
             var client = await manager.FindByClientIdAsync(applicationConfig.ClientId, cancellationToken);
@@ -53,7 +56,6 @@ public class OpenIddictWorker(IServiceProvider serviceProvider, IConfiguration c
                     Permissions.Scopes.Email,
                     Permissions.Scopes.Profile,
                     Permissions.Scopes.Roles,
-                    Permissions.Prefixes.Scope + applicationConfig.Scope,
                     Permissions.Prefixes.Scope + Scopes.OfflineAccess,
                 },
                 ClientType = string.IsNullOrWhiteSpace(applicationConfig.ClientSecret) ? ClientTypes.Public : ClientTypes.Confidential,
@@ -61,7 +63,26 @@ public class OpenIddictWorker(IServiceProvider serviceProvider, IConfiguration c
                 
             };
 
-            if(app.ClientType == ClientTypes.Confidential)
+            var appScopes = applicationConfig.Scope.Split(" ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            foreach (var appScope in appScopes)
+            {
+                app.Permissions.Add(Permissions.Prefixes.Scope + appScope);
+                if (!scopeDictionary.TryAdd(appScope, new OpenIddictScopeDescriptor
+                {
+                    Name = appScope,
+                    DisplayName = appScope,
+                    Resources =
+                {
+                    applicationConfig.ClientId
+                }
+                }))
+                {
+                    scopeDictionary[appScope].Resources.Add(applicationConfig.ClientId);
+                }
+            }
+
+            if (app.ClientType == ClientTypes.Confidential)
             {
                 app.Permissions.Add(Permissions.GrantTypes.ClientCredentials);
                 app.Permissions.Add(Permissions.ResponseTypes.Token);
@@ -86,27 +107,18 @@ public class OpenIddictWorker(IServiceProvider serviceProvider, IConfiguration c
 
 
             await manager.CreateAsync(app, cancellationToken);
-
-            //Scopes
-
-            //var dbScope = await scopeManager.FindByNameAsync(Permissions.Prefixes.Scope + applicationConfig.Scope, cancellationToken);
-            //if(dbScope != null)
-            //{
-            //    await scopeManager.DeleteAsync(dbScope, cancellationToken);
-            //}
-
-            //var scopeDescriptor = new OpenIddictScopeDescriptor
-            //{
-            //    Name = applicationConfig.Scope,
-            //    DisplayName = applicationConfig.Scope,
-            //    Resources =
-            //    {
-            //        applicationConfig.ClientId
-            //    }
-            //};
-            //await scopeManager.CreateAsync(scopeDescriptor, cancellationToken);
         }
 
+
+        foreach (var appScope in scopeDictionary)
+        {
+            var s = await scopeManager.FindByNameAsync(appScope.Key);
+            if (s != null)
+            {
+                await scopeManager.DeleteAsync(s);
+            }
+            await scopeManager.CreateAsync(appScope.Value);
+        }
     }
 
     private async Task CreateUsersAsync(IServiceScope scope, CancellationToken cancellationToken)
