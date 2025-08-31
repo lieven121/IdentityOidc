@@ -60,18 +60,27 @@ public static class ExternalEndpoints
 
         return app;
     }
-
-    private static async Task<Results<Ok<UserDto>, NotFound>> GetUserByEmail(string email, 
+    
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="email"></param>
+    /// <param name="returnNullWhenNotFound">Return null 200 Ok instead of 404</param>
+    /// <returns></returns>
+    private static async Task<Results<Ok<UserDto?>, NotFound>> GetUserByEmail(string email,
         HttpContext context,
-        UserManager<ApplicationUser> userManager
+        UserManager<ApplicationUser> userManager,
+        bool returnNullWhenNotFound = false
         )
     {
         var user = await userManager.FindByEmailAsync(email);
         if (user is null)
         {
+            if (returnNullWhenNotFound)
+                return TypedResults.Ok<UserDto?>(null);
             return TypedResults.NotFound();
         }
-        return TypedResults.Ok(new UserDto
+        return TypedResults.Ok<UserDto?>(new UserDto
         {
             Id = user.Id,
             Email = user.Email ?? "",
@@ -79,17 +88,26 @@ public static class ExternalEndpoints
         });
     }
 
-    private static async Task<Results<Ok<UserDto>, NotFound>> GetUserById(string id,
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="returnNullWhenNotFound">Return null 200 Ok instead of 404</param>
+    /// <returns></returns>
+    private static async Task<Results<Ok<UserDto?>, NotFound>> GetUserById(string id,
     HttpContext context,
-    UserManager<ApplicationUser> userManager
+    UserManager<ApplicationUser> userManager,
+    bool returnNullWhenNotFound = false
     )
     {
         var user = await userManager.FindByIdAsync(id);
         if (user is null)
         {
+            if (returnNullWhenNotFound)
+                return TypedResults.Ok<UserDto?>(null);
             return TypedResults.NotFound();
         }
-        return TypedResults.Ok(new UserDto
+        return TypedResults.Ok<UserDto?>(new UserDto
         {
             Id = user.Id,
             Email = user.Email ?? "",
@@ -165,14 +183,34 @@ public static class ExternalEndpoints
     UserManager<ApplicationUser> userManager)
     {
 
-        return TypedResults.Conflict();
 
-        //return TypedResults.Ok(new UserDto
-        //{
-        //    Id = user.Id,
-        //    Email = user.Email ?? "",
-        //    UserName = user.UserName ?? "",
-        //});
+        var result = await userManager.FindByEmailAsync(createUserDto.Email);
+        if (result != null)
+            return TypedResults.Conflict();
+
+        var user = new ApplicationUser
+        {
+            Email = createUserDto.Email,
+            EmailConfirmed = createUserDto.EmailConfirmed,
+            UserName = createUserDto.Username,
+        };
+
+
+        await userManager.CreateAsync(user);
+        
+        if(!string.IsNullOrWhiteSpace(createUserDto.Password))
+            await userManager.AddPasswordAsync(user, createUserDto.Password);
+        else
+        {
+            //add password and send email?
+        }
+
+            return TypedResults.Ok(new UserDto
+            {
+                Id = user.Id,
+                Email = user.Email ?? "",
+                UserName = user.UserName ?? "",
+            });
     }
 
 
