@@ -116,10 +116,13 @@ public static class SwaggerConfig
             {
               Namespace = "IdentityOidc.API"
             },
-            ClientBaseClass = "ClientBase",
+            UseBaseUrl = false,
+            //ClientBaseClass = "ClientBase",
             GenerateClientClasses = true,
             GenerateClientInterfaces = false,
             GenerateOptionalParameters = true,
+            WrapResponses = true,
+            WrapDtoExceptions = false
         };
 
         settings.OperationNameGenerator = new MultipleClientsFromFirstTagAndOperationNameGenerator();
