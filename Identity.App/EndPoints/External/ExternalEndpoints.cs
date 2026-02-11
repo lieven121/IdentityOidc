@@ -196,9 +196,14 @@ public static class ExternalEndpoints
         };
 
 
-        await userManager.CreateAsync(user);
-        
-        if(!string.IsNullOrWhiteSpace(createUserDto.Password))
+        var res = await userManager.CreateAsync(user);
+        if (!res.Succeeded)
+        {
+            Console.Error.WriteLine($"Failed to create user {user.Id}: {string.Join(", ", res.Errors.Select(e => e.Description))}");
+            return TypedResults.Conflict();
+        }
+
+        if (!string.IsNullOrWhiteSpace(createUserDto.Password))
             await userManager.AddPasswordAsync(user, createUserDto.Password);
         else
         {
@@ -264,6 +269,7 @@ public static class ExternalEndpoints
 
         if (!result.Succeeded)
         {
+            Console.Error.WriteLine($"Failed to update user {user.Id}: {string.Join(", ", result.Errors.Select(e => e.Description))}");
             return TypedResults.Conflict();
         }
 
