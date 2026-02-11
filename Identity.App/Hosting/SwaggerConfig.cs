@@ -24,6 +24,7 @@ public static class SwaggerConfig
         //services.AddSwaggerGen();
         services.AddOpenApiDocument(options =>
         {
+            options.DefaultResponseReferenceTypeNullHandling = NJsonSchema.Generation.ReferenceTypeNullHandling.Null;
             options.AddOperationFilter(context =>
             {
 

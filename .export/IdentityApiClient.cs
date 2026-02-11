@@ -100,10 +100,6 @@ namespace IdentityOidc.API
                         if (status_ == 200)
                         {
                             var objectResponse_ = await ReadObjectResponseAsync<StatusDto>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
                             return new SwaggerResponse<StatusDto>(status_, headers_, objectResponse_.Object);
                         }
                         else
@@ -411,10 +407,6 @@ namespace IdentityOidc.API
                         if (status_ == 200)
                         {
                             var objectResponse_ = await ReadObjectResponseAsync<UserDto>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
                             return new SwaggerResponse<UserDto>(status_, headers_, objectResponse_.Object);
                         }
                         else
@@ -716,10 +708,6 @@ namespace IdentityOidc.API
                         if (status_ == 200)
                         {
                             var objectResponse_ = await ReadObjectResponseAsync<ResultPageOfUserDto>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
                             return new SwaggerResponse<ResultPageOfUserDto>(status_, headers_, objectResponse_.Object);
                         }
                         else
@@ -793,10 +781,6 @@ namespace IdentityOidc.API
                         if (status_ == 200)
                         {
                             var objectResponse_ = await ReadObjectResponseAsync<UserDto>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
                             return new SwaggerResponse<UserDto>(status_, headers_, objectResponse_.Object);
                         }
                         else
@@ -873,10 +857,6 @@ namespace IdentityOidc.API
                         if (status_ == 200)
                         {
                             var objectResponse_ = await ReadObjectResponseAsync<ResultPageOfUserDto>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
                             return new SwaggerResponse<ResultPageOfUserDto>(status_, headers_, objectResponse_.Object);
                         }
                         else
@@ -901,7 +881,7 @@ namespace IdentityOidc.API
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<SwaggerResponse<UserDto>> External_GetUserByEmailAsync(string email, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public virtual async System.Threading.Tasks.Task<SwaggerResponse<UserDto>> External_GetUserByEmailAsync(string email, bool? returnNullWhenNotFound = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             if (email == null)
                 throw new System.ArgumentNullException("email");
@@ -920,6 +900,12 @@ namespace IdentityOidc.API
                     // Operation Path: "api/External/users/email/{email}"
                     urlBuilder_.Append("api/External/users/email/");
                     urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(email, System.Globalization.CultureInfo.InvariantCulture)));
+                    urlBuilder_.Append('?');
+                    if (returnNullWhenNotFound != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("returnNullWhenNotFound")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(returnNullWhenNotFound, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    }
+                    urlBuilder_.Length--;
 
                     PrepareRequest(client_, request_, urlBuilder_);
 
@@ -1034,10 +1020,6 @@ namespace IdentityOidc.API
                         if (status_ == 200)
                         {
                             var objectResponse_ = await ReadObjectResponseAsync<UserDto>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
                             return new SwaggerResponse<UserDto>(status_, headers_, objectResponse_.Object);
                         }
                         else
@@ -1068,7 +1050,7 @@ namespace IdentityOidc.API
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<SwaggerResponse<UserDto>> External_GetUserByIdAsync(string id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public virtual async System.Threading.Tasks.Task<SwaggerResponse<UserDto>> External_GetUserByIdAsync(string id, bool? returnNullWhenNotFound = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             if (id == null)
                 throw new System.ArgumentNullException("id");
@@ -1087,6 +1069,12 @@ namespace IdentityOidc.API
                     // Operation Path: "api/External/users/{id}"
                     urlBuilder_.Append("api/External/users/");
                     urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(id, System.Globalization.CultureInfo.InvariantCulture)));
+                    urlBuilder_.Append('?');
+                    if (returnNullWhenNotFound != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("returnNullWhenNotFound")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(returnNullWhenNotFound, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    }
+                    urlBuilder_.Length--;
 
                     PrepareRequest(client_, request_, urlBuilder_);
 
@@ -1201,10 +1189,6 @@ namespace IdentityOidc.API
                         if (status_ == 200)
                         {
                             var objectResponse_ = await ReadObjectResponseAsync<UserDto>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
                             return new SwaggerResponse<UserDto>(status_, headers_, objectResponse_.Object);
                         }
                         else
@@ -1289,10 +1273,6 @@ namespace IdentityOidc.API
                         if (status_ == 200)
                         {
                             var objectResponse_ = await ReadObjectResponseAsync<UserDto>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
                             return new SwaggerResponse<UserDto>(status_, headers_, objectResponse_.Object);
                         }
                         else
@@ -1383,10 +1363,6 @@ namespace IdentityOidc.API
                         if (status_ == 200)
                         {
                             var objectResponse_ = await ReadObjectResponseAsync<UserDto>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
                             return new SwaggerResponse<UserDto>(status_, headers_, objectResponse_.Object);
                         }
                         else
@@ -2058,10 +2034,6 @@ namespace IdentityOidc.API
                         if (status_ == 200)
                         {
                             var objectResponse_ = await ReadObjectResponseAsync<System.Collections.Generic.ICollection<Claim>>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
                             return new SwaggerResponse<System.Collections.Generic.ICollection<Claim>>(status_, headers_, objectResponse_.Object);
                         }
                         else

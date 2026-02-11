@@ -67,7 +67,7 @@ export class StatusClient extends ClientBase {
         this.baseUrl = this.getBaseUrl("https://localhost:7038", baseUrl);
     }
 
-    status(): Promise<StatusDto> {
+    status(): Promise<StatusDto | null> {
         let url_ = this.baseUrl + "/api/status";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -85,14 +85,14 @@ export class StatusClient extends ClientBase {
         });
     }
 
-    protected processStatus(response: Response): Promise<StatusDto> {
+    protected processStatus(response: Response): Promise<StatusDto | null> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = StatusDto.fromJS(resultData200);
+            result200 = resultData200 ? StatusDto.fromJS(resultData200) : null as any;
             return result200;
             });
         } else if (status !== 200 && status !== 204) {
@@ -100,7 +100,7 @@ export class StatusClient extends ClientBase {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<StatusDto>(null as any);
+        return Promise.resolve<StatusDto | null>(null as any);
     }
 }
 
@@ -151,7 +151,7 @@ export class UsersClient extends ClientBase {
         return Promise.resolve<UserDto>(null as any);
     }
 
-    updateUser(updateUserDto: UpdateUserDto): Promise<UserDto> {
+    updateUser(updateUserDto: UpdateUserDto): Promise<UserDto | null> {
         let url_ = this.baseUrl + "/api/users/me";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -173,14 +173,14 @@ export class UsersClient extends ClientBase {
         });
     }
 
-    protected processUpdateUser(response: Response): Promise<UserDto> {
+    protected processUpdateUser(response: Response): Promise<UserDto | null> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = UserDto.fromJS(resultData200);
+            result200 = resultData200 ? UserDto.fromJS(resultData200) : null as any;
             return result200;
             });
         } else if (status !== 200 && status !== 204) {
@@ -188,7 +188,7 @@ export class UsersClient extends ClientBase {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<UserDto>(null as any);
+        return Promise.resolve<UserDto | null>(null as any);
     }
 
     updatePassword(updatePasswordDto: UpdatePasswordDto): Promise<void> {
@@ -239,7 +239,7 @@ export class ExternalClient extends ClientBase {
         this.baseUrl = this.getBaseUrl("https://localhost:7038", baseUrl);
     }
 
-    external_GetUsers(): Promise<ResultPageOfUserDto> {
+    external_GetUsers(): Promise<ResultPageOfUserDto | null> {
         let url_ = this.baseUrl + "/api/External/users";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -257,14 +257,14 @@ export class ExternalClient extends ClientBase {
         });
     }
 
-    protected processExternal_GetUsers(response: Response): Promise<ResultPageOfUserDto> {
+    protected processExternal_GetUsers(response: Response): Promise<ResultPageOfUserDto | null> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = ResultPageOfUserDto.fromJS(resultData200);
+            result200 = resultData200 ? ResultPageOfUserDto.fromJS(resultData200) : null as any;
             return result200;
             });
         } else if (status !== 200 && status !== 204) {
@@ -272,10 +272,10 @@ export class ExternalClient extends ClientBase {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<ResultPageOfUserDto>(null as any);
+        return Promise.resolve<ResultPageOfUserDto | null>(null as any);
     }
 
-    external_CreateUser(createUserDto: CreateUserDto): Promise<UserDto> {
+    external_CreateUser(createUserDto: CreateUserDto): Promise<UserDto | null> {
         let url_ = this.baseUrl + "/api/External/users";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -297,14 +297,14 @@ export class ExternalClient extends ClientBase {
         });
     }
 
-    protected processExternal_CreateUser(response: Response): Promise<UserDto> {
+    protected processExternal_CreateUser(response: Response): Promise<UserDto | null> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = UserDto.fromJS(resultData200);
+            result200 = resultData200 ? UserDto.fromJS(resultData200) : null as any;
             return result200;
             });
         } else if (status === 409) {
@@ -316,10 +316,10 @@ export class ExternalClient extends ClientBase {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<UserDto>(null as any);
+        return Promise.resolve<UserDto | null>(null as any);
     }
 
-    external_GetUsersSearch(filter?: UsersFilter | undefined): Promise<ResultPageOfUserDto> {
+    external_GetUsersSearch(filter?: UsersFilter | undefined): Promise<ResultPageOfUserDto | null> {
         let url_ = this.baseUrl + "/api/External/users/search";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -341,14 +341,14 @@ export class ExternalClient extends ClientBase {
         });
     }
 
-    protected processExternal_GetUsersSearch(response: Response): Promise<ResultPageOfUserDto> {
+    protected processExternal_GetUsersSearch(response: Response): Promise<ResultPageOfUserDto | null> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = ResultPageOfUserDto.fromJS(resultData200);
+            result200 = resultData200 ? ResultPageOfUserDto.fromJS(resultData200) : null as any;
             return result200;
             });
         } else if (status !== 200 && status !== 204) {
@@ -356,14 +356,18 @@ export class ExternalClient extends ClientBase {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<ResultPageOfUserDto>(null as any);
+        return Promise.resolve<ResultPageOfUserDto | null>(null as any);
     }
 
-    external_GetUserByEmail(email: string): Promise<UserDto> {
-        let url_ = this.baseUrl + "/api/External/users/email/{email}";
+    external_GetUserByEmail(email: string, returnNullWhenNotFound?: boolean | undefined): Promise<UserDto> {
+        let url_ = this.baseUrl + "/api/External/users/email/{email}?";
         if (email === undefined || email === null)
             throw new globalThis.Error("The parameter 'email' must be defined.");
         url_ = url_.replace("{email}", encodeURIComponent("" + email));
+        if (returnNullWhenNotFound === null)
+            throw new globalThis.Error("The parameter 'returnNullWhenNotFound' cannot be null.");
+        else if (returnNullWhenNotFound !== undefined)
+            url_ += "returnNullWhenNotFound=" + encodeURIComponent("" + returnNullWhenNotFound) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: RequestInit = {
@@ -402,7 +406,7 @@ export class ExternalClient extends ClientBase {
         return Promise.resolve<UserDto>(null as any);
     }
 
-    external_UpdateUserByEmail(email: string, updateUserDto: UpdateUserDto2): Promise<UserDto> {
+    external_UpdateUserByEmail(email: string, updateUserDto: UpdateUserDto2): Promise<UserDto | null> {
         let url_ = this.baseUrl + "/api/External/users/email/{email}";
         if (email === undefined || email === null)
             throw new globalThis.Error("The parameter 'email' must be defined.");
@@ -427,14 +431,14 @@ export class ExternalClient extends ClientBase {
         });
     }
 
-    protected processExternal_UpdateUserByEmail(response: Response): Promise<UserDto> {
+    protected processExternal_UpdateUserByEmail(response: Response): Promise<UserDto | null> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = UserDto.fromJS(resultData200);
+            result200 = resultData200 ? UserDto.fromJS(resultData200) : null as any;
             return result200;
             });
         } else if (status === 409) {
@@ -446,14 +450,18 @@ export class ExternalClient extends ClientBase {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<UserDto>(null as any);
+        return Promise.resolve<UserDto | null>(null as any);
     }
 
-    external_GetUserById(id: string): Promise<UserDto> {
-        let url_ = this.baseUrl + "/api/External/users/{id}";
+    external_GetUserById(id: string, returnNullWhenNotFound?: boolean | undefined): Promise<UserDto> {
+        let url_ = this.baseUrl + "/api/External/users/{id}?";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
         url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (returnNullWhenNotFound === null)
+            throw new globalThis.Error("The parameter 'returnNullWhenNotFound' cannot be null.");
+        else if (returnNullWhenNotFound !== undefined)
+            url_ += "returnNullWhenNotFound=" + encodeURIComponent("" + returnNullWhenNotFound) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: RequestInit = {
@@ -492,7 +500,7 @@ export class ExternalClient extends ClientBase {
         return Promise.resolve<UserDto>(null as any);
     }
 
-    external_UpdateUser(userId: string, updateUserDto: UpdateUserDto2): Promise<UserDto> {
+    external_UpdateUser(userId: string, updateUserDto: UpdateUserDto2): Promise<UserDto | null> {
         let url_ = this.baseUrl + "/api/External/users/{userId}";
         if (userId === undefined || userId === null)
             throw new globalThis.Error("The parameter 'userId' must be defined.");
@@ -517,14 +525,14 @@ export class ExternalClient extends ClientBase {
         });
     }
 
-    protected processExternal_UpdateUser(response: Response): Promise<UserDto> {
+    protected processExternal_UpdateUser(response: Response): Promise<UserDto | null> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = UserDto.fromJS(resultData200);
+            result200 = resultData200 ? UserDto.fromJS(resultData200) : null as any;
             return result200;
             });
         } else if (status === 409) {
@@ -536,10 +544,10 @@ export class ExternalClient extends ClientBase {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<UserDto>(null as any);
+        return Promise.resolve<UserDto | null>(null as any);
     }
 
-    external_ResetPassword(userId: string, resetPasswordDto: ResetPasswordDto): Promise<UserDto> {
+    external_ResetPassword(userId: string, resetPasswordDto: ResetPasswordDto): Promise<UserDto | null> {
         let url_ = this.baseUrl + "/api/External/users/{userId}/password";
         if (userId === undefined || userId === null)
             throw new globalThis.Error("The parameter 'userId' must be defined.");
@@ -564,14 +572,14 @@ export class ExternalClient extends ClientBase {
         });
     }
 
-    protected processExternal_ResetPassword(response: Response): Promise<UserDto> {
+    protected processExternal_ResetPassword(response: Response): Promise<UserDto | null> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = UserDto.fromJS(resultData200);
+            result200 = resultData200 ? UserDto.fromJS(resultData200) : null as any;
             return result200;
             });
         } else if (status === 400) {
@@ -587,10 +595,10 @@ export class ExternalClient extends ClientBase {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<UserDto>(null as any);
+        return Promise.resolve<UserDto | null>(null as any);
     }
 
-    external_ResetPasswordByEmail(email: string, resetPasswordDto: ResetPasswordDto): Promise<UserDto> {
+    external_ResetPasswordByEmail(email: string, resetPasswordDto: ResetPasswordDto): Promise<UserDto | null> {
         let url_ = this.baseUrl + "/api/External/users/email/{email}/password";
         if (email === undefined || email === null)
             throw new globalThis.Error("The parameter 'email' must be defined.");
@@ -615,14 +623,14 @@ export class ExternalClient extends ClientBase {
         });
     }
 
-    protected processExternal_ResetPasswordByEmail(response: Response): Promise<UserDto> {
+    protected processExternal_ResetPasswordByEmail(response: Response): Promise<UserDto | null> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = UserDto.fromJS(resultData200);
+            result200 = resultData200 ? UserDto.fromJS(resultData200) : null as any;
             return result200;
             });
         } else if (status === 400) {
@@ -638,7 +646,7 @@ export class ExternalClient extends ClientBase {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<UserDto>(null as any);
+        return Promise.resolve<UserDto | null>(null as any);
     }
 }
 
@@ -797,7 +805,7 @@ export class OpenIdConnectClient extends ClientBase {
         return Promise.resolve<void>(null as any);
     }
 
-    userInfo(): Promise<Claim[]> {
+    userInfo(): Promise<Claim[] | null> {
         let url_ = this.baseUrl + "/connect/userinfo";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -815,7 +823,7 @@ export class OpenIdConnectClient extends ClientBase {
         });
     }
 
-    protected processUserInfo(response: Response): Promise<Claim[]> {
+    protected processUserInfo(response: Response): Promise<Claim[] | null> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
@@ -837,7 +845,7 @@ export class OpenIdConnectClient extends ClientBase {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<Claim[]>(null as any);
+        return Promise.resolve<Claim[] | null>(null as any);
     }
 
     endSession(): Promise<void> {
