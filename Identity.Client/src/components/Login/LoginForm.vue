@@ -19,7 +19,7 @@ const props = withDefaults(defineProps<{
 }>(), {
   position: 'left',
 
-  showPasswordDefault: false,
+  showPasswordDefault: true,
 
   supportPasskeySignIn: false,
   externalProviders: () => [],
@@ -240,7 +240,7 @@ onMounted(() => {
               <Password
                 :inputProps="{ autocomplete: 'current-password' }"
                 :invalid="passwordError"
-                autocomplete="password"
+                autocomplete="current-password"
                 v-model="password"
                 input-id="PasswordInput"
                 :feedback="false"
