@@ -46,7 +46,7 @@ public static class HostingConfig
             {
                 ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
             };
-            forwardedHeaderOptions.KnownNetworks.Clear();
+            forwardedHeaderOptions.KnownIPNetworks.Clear();
             forwardedHeaderOptions.KnownProxies.Clear();
             var ips = app.Configuration.GetSection("Hosting:ReverseProxySupport")?.Get<string[]?>();
             if (ips != null)

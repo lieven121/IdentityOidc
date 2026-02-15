@@ -59,6 +59,7 @@ public static class OpenIddictConfig
                     Permissions.Scopes.Email,
                     Permissions.Scopes.Profile,
                     Permissions.Scopes.Roles,
+                    Models.Consts.Scopes.Admin,
                 }.Select(s => s.Replace(Permissions.Prefixes.Scope, ""));
 
                 options.RegisterScopes(scopes.ToArray());
