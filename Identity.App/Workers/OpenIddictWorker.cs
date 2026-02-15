@@ -86,7 +86,7 @@ public class OpenIddictWorker(IServiceProvider serviceProvider, IConfiguration c
             {
                 app.Permissions.Add(Permissions.GrantTypes.ClientCredentials);
                 app.Permissions.Add(Permissions.ResponseTypes.Token);
-                app.Permissions.Remove(Permissions.GrantTypes.AuthorizationCode);
+                //app.Permissions.Remove(Permissions.GrantTypes.AuthorizationCode);
             }
 
             if(applicationConfig.PKCE)
