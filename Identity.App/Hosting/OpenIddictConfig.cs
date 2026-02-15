@@ -74,8 +74,8 @@ public static class OpenIddictConfig
 
                 // Register the signing and encryption credentials.
                 //todo only dev
-                options.AddDevelopmentEncryptionCertificate()
-                       .AddDevelopmentSigningCertificate();
+                //options.AddDevelopmentEncryptionCertificate()
+                //       .AddDevelopmentSigningCertificate();
 
                 if(!string.IsNullOrEmpty(openIddictSettings?.Encryption?.Key))
                 {
