@@ -3,6 +3,7 @@ using Identity.App.Data;
 using Identity.App.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using OpenIddict.Abstractions;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
@@ -56,6 +57,7 @@ public class OpenIddictWorker(IServiceProvider serviceProvider, IConfiguration c
                     Permissions.Scopes.Email,
                     Permissions.Scopes.Profile,
                     Permissions.Scopes.Roles,
+                    Permissions.Prefixes.Scope + Scopes.OpenId,
                     Permissions.Prefixes.Scope + Scopes.OfflineAccess,
                 },
                 ClientType = string.IsNullOrWhiteSpace(applicationConfig.ClientSecret) ? ClientTypes.Public : ClientTypes.Confidential,
