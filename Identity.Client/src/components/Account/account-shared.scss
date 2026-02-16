@@ -1,0 +1,346 @@
+// Shared styles for all account components
+
+// Card Sizing & Scrolling
+.account-card {
+  max-height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+
+  :deep(.p-card-body) {
+    max-height: 100%;
+  }
+  :deep(.p-card-content) {
+    overflow: auto;
+  }
+}
+
+// Card Header with Icon
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+
+  i {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+  }
+
+  h1,
+  h2 {
+    margin: 0;
+    font-size: 1.75rem;
+  }
+
+  &.with-actions {
+    justify-content: space-between;
+  }
+}
+
+// Section Content Areas
+.section-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.section-description {
+  margin: 0;
+  color: var(--p-text-muted-color);
+  font-size: 0.9rem;
+}
+
+// Subsection Headers (for admin components with sticky headers)
+.subsection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  background: var(--p-card-background);
+  z-index: 1;
+  padding: 0.5rem 0;
+  margin: 0;
+
+  .subsection-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+
+    h3 {
+      margin: 0;
+      font-size: 1rem;
+    }
+  }
+
+  .subsection-actions {
+    display: flex;
+    gap: 0.25rem;
+  }
+}
+
+// Form Fields
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  label {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-color);
+  }
+
+  .field-hint {
+    color: var(--text-color-secondary);
+    font-size: 0.85rem;
+    margin-top: -0.25rem;
+  }
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+// Action Buttons Container
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--surface-border);
+
+  &.no-border {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  &.space-between {
+    justify-content: space-between;
+  }
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.25rem;
+}
+
+// Loading State
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 3rem;
+
+  p {
+    color: var(--text-color-secondary);
+  }
+}
+
+// Empty State
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 3rem;
+  color: var(--text-color-secondary);
+
+  i {
+    font-size: 3rem;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+// Detail Sections (for dialogs/views)
+.detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-color-secondary);
+  }
+}
+
+.detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  label {
+    font-weight: 600;
+    color: var(--text-color-secondary);
+    font-size: 0.9rem;
+  }
+
+  span {
+    font-size: 1rem;
+  }
+}
+
+// Value with Copy Button
+.value-with-copy {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  code {
+    flex: 1;
+    background: var(--surface-100);
+    padding: 0.5rem;
+    border-radius: var(--border-radius);
+    font-size: 0.85rem;
+    font-family: monospace;
+  }
+}
+
+// Status Info Layout
+.status-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+
+  .status-icon {
+    font-size: 2rem;
+
+    &.warning {
+      color: var(--orange-500);
+    }
+
+    &.success {
+      color: var(--green-500);
+    }
+
+    &.danger {
+      color: var(--red-500);
+    }
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 1.1rem;
+  }
+
+  p {
+    margin: 0.25rem 0 0 0;
+    color: var(--text-color-secondary);
+    font-size: 0.9rem;
+  }
+}
+
+// Stats Grid
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--surface-50);
+    border-radius: var(--border-radius);
+
+    i {
+      font-size: 2rem;
+      color: var(--primary-color);
+    }
+
+    div {
+      display: flex;
+      flex-direction: column;
+
+      .stat-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+      }
+
+      .stat-label {
+        font-size: 0.85rem;
+        color: var(--text-color-secondary);
+      }
+    }
+  }
+}
+
+// Title Section (for pages with actions)
+.title-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  i {
+    font-size: 1.5rem;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 1.75rem;
+  }
+}
+
+// Admin Item Styling
+.admin-item {
+  i:first-child {
+    color: var(--orange-500);
+  }
+
+  &.active {
+    i {
+      color: inherit;
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .card-header {
+    h1,
+    h2 {
+      font-size: 1.5rem;
+    }
+
+    &.with-actions {
+      flex-direction: column;
+      align-items: stretch;
+
+      button {
+        width: 100%;
+      }
+    }
+  }
+
+  .title-section {
+    h1 {
+      font-size: 1.5rem;
+    }
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    &.mobile-column {
+      flex-direction: column;
+
+      button {
+        width: 100%;
+      }
+    }
+  }
+}

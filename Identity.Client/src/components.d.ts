@@ -8,17 +8,39 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AccountInfo: typeof import('./components/Account/AccountInfo.vue')['default']
+    AccountLayout: typeof import('./components/Account/AccountLayout.vue')['default']
     AccountOverview: typeof import('./components/Account/AccountOverview.vue')['default']
+    ApplicationsManagement: typeof import('./components/Account/Admin/ApplicationsManagement.vue')['default']
+    Avatar: typeof import('primevue/avatar')['default']
     Button: typeof import('primevue/button')['default']
     Card: typeof import('primevue/card')['default']
+    Chip: typeof import('primevue/chip')['default']
+    Column: typeof import('primevue/column')['default']
+    DataTable: typeof import('primevue/datatable')['default']
+    Dialog: typeof import('primevue/dialog')['default']
     Divider: typeof import('primevue/divider')['default']
+    IconField: typeof import('primevue/iconfield')['default']
+    InputIcon: typeof import('primevue/inputicon')['default']
     InputOtp: typeof import('primevue/inputotp')['default']
     InputText: typeof import('primevue/inputtext')['default']
     LabelInput: typeof import('./components/LabelInput.vue')['default']
     LoginForm: typeof import('./components/Login/LoginForm.vue')['default']
+    Menu: typeof import('primevue/menu')['default']
+    Message: typeof import('primevue/message')['default']
     Password: typeof import('primevue/password')['default']
+    ProgressSpinner: typeof import('primevue/progressspinner')['default']
+    RolesManagement: typeof import('./components/Account/Admin/RolesManagement.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SecuritySettings: typeof import('./components/Account/SecuritySettings.vue')['default']
     Skeleton: typeof import('primevue/skeleton')['default']
+    Tag: typeof import('primevue/tag')['default']
+    Textarea: typeof import('primevue/textarea')['default']
+    Toast: typeof import('primevue/toast')['default']
+    UsersManagement: typeof import('./components/Account/Admin/UsersManagement.vue')['default']
+  }
+  export interface GlobalDirectives {
+    Tooltip: typeof import('primevue/tooltip')['default']
   }
 }

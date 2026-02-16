@@ -6,6 +6,7 @@ import {
 } from '@simplewebauthn/browser'
 import type { ExternalLoginProvider } from './ExternalLoginProvider';
 import { ApiException, IdentityClient, LoginRequest } from '@/resources/api-clients/identity-api-client';
+import { RouteNames } from '@/router/routes';
 
 
 const props = withDefaults(defineProps<{
@@ -190,7 +191,7 @@ function loginSuccesful() {
   if (returnUrl) {
     window.location.href = returnUrl;
   } else {
-    router.push({ name: 'Account' });
+    router.push({ name: RouteNames.AccountInfo });
   }
 
 }

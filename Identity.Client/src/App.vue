@@ -2,6 +2,10 @@
 
 <template>
   <RouterView />
+  <Toast
+    position="bottom-right"
+    group="notifications"
+  />
 </template>
 
 <style lang="scss">

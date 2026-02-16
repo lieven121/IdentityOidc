@@ -121,7 +121,7 @@ p {
 
 .account-overview {
   display: grid;
-
+  height: 100%;
 
   .wrapper {
     display: grid;
@@ -129,16 +129,17 @@ p {
     grid-column: 1;
     grid-row: 1;
     place-items: center;
+    height: 100%;
 
     .account-card {
       grid-row: 2;
       grid-column: 1;
       gap: 1em;
       padding: 1rem;
-      // border-radius: 0.5em;
-      // border: 1px solid #ccc;
       width: 30rem;
-
+      max-height: calc(85vh - 4rem);
+      display: flex;
+      flex-direction: column;
     }
   }
 }
