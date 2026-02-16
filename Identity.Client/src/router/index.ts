@@ -49,33 +49,19 @@ const router = createRouter({
           path: 'admin/users',
           name: RouteNames.AdminUsers,
           component: () => import('../components/Account/Admin/UsersManagement.vue'),
-          beforeEnter: (to, from, next) => {
-            // const userStore = useUserStore()
-            // TODO: Check actual admin role from API
-            // if (userStore.user?.roles?.includes('Admin')) next()
-            // For now, allow access (update this based on your API)
-            next()
-          },
+          meta: { requiresAdmin: true },
         },
         {
           path: 'admin/roles',
           name: RouteNames.AdminRoles,
           component: () => import('../components/Account/Admin/RolesManagement.vue'),
-          beforeEnter: (to, from, next) => {
-            // const userStore = useUserStore()
-            // TODO: Check actual admin role from API
-            next()
-          },
+          meta: { requiresAdmin: true },
         },
         {
           path: 'admin/applications',
           name: RouteNames.AdminApplications,
           component: () => import('../components/Account/Admin/ApplicationsManagement.vue'),
-          beforeEnter: (to, from, next) => {
-            // const userStore = useUserStore()
-            // TODO: Check actual admin role from API
-            next()
-          },
+          meta: { requiresAdmin: true },
         },
       ],
     },
@@ -85,7 +71,11 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
   await userStore.loadUser()
-  next()
+  if (to.meta.requiresAdmin && !userStore.isAdmin) {
+    next({ name: RouteNames.AccountInfo })
+  } else {
+    next()
+  }
 })
 
 export default router

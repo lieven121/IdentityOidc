@@ -13,14 +13,6 @@ const userStore = useUserStore()
 const router = useRouter()
 const route = useRoute()
 
-// TODO: Update this to check actual user roles from the API
-// For now, we'll assume admin if user exists (you can customize this logic)
-const isAdmin = computed(() => {
-  // Check if user has admin role - this should be implemented based on your API
-  // Example: return userStore.user?.roles?.includes('Admin')
-  return true // Set to true for demo purposes, update based on your actual role checking
-})
-
 const menuItems = computed<MenuItem[]>(() => {
   const items: MenuItem[] = [
     { label: 'Account Info', icon: 'fa-duotone fa-user', routeName: RouteNames.AccountInfo },
@@ -29,7 +21,7 @@ const menuItems = computed<MenuItem[]>(() => {
   ]
 
   // Add admin section if user is admin
-  if (isAdmin.value) {
+  if (userStore.isAdmin) {
     items.push(
       { label: 'Users', icon: 'fa-duotone fa-users', routeName: RouteNames.AdminUsers, adminOnly: true, dividerBefore: true },
       { label: 'Roles', icon: 'fa-duotone fa-key', routeName: RouteNames.AdminRoles, adminOnly: true },
@@ -41,12 +33,26 @@ const menuItems = computed<MenuItem[]>(() => {
 })
 
 const isMobile = ref(false)
-const showMobileMenu = ref(true)
+// const showMobileMenu = ref(true)
+
+const showMobileMenu = computed({
+  // getter
+  get() {
+    if (!isMobile.value) return false
+    return route.query['show'] !== 'true'
+  },
+  // setter
+  set(newValue) {
+    if (!isMobile.value) {
+      router.replace({ query: { ...route.query, show: undefined } })
+      return
+    }
+    router.replace({ query: { ...route.query, show: !newValue ? 'true' : undefined } })
+  }
+})
 
 const checkMobile = () => {
   isMobile.value = window.innerWidth < 768
-  // On desktop, hide the menu list (show content instead)
-  showMobileMenu.value = isMobile.value
 }
 
 onMounted(() => {

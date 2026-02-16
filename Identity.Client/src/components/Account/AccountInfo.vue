@@ -23,7 +23,12 @@ const handleUpdate = async () => {
     class="account-card account-info-card"
   >
     <template #title>
-      <h1>Account Information</h1>
+      <div class="card-header">
+        <div class="title-section">
+          <i class="fa-duotone fa-user"></i>
+          <h1>Account Information</h1>
+        </div>
+      </div>
     </template>
     <template #content>
       <div class="info-section">
