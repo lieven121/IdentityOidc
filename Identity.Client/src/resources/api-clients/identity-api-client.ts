@@ -269,6 +269,202 @@ export class UsersClient extends ClientBase {
         }
         return Promise.resolve<string[] | null>(null as any);
     }
+
+    get2faStatus(): Promise<TwoFactorStatusDto | null> {
+        let url_ = this.baseUrl + "/api/users/me/2fa/status";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processGet2faStatus(_response));
+        });
+    }
+
+    protected processGet2faStatus(response: Response): Promise<TwoFactorStatusDto | null> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = resultData200 ? TwoFactorStatusDto.fromJS(resultData200) : null as any;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<TwoFactorStatusDto | null>(null as any);
+    }
+
+    get2faSetup(): Promise<TwoFactorSetupDto | null> {
+        let url_ = this.baseUrl + "/api/users/me/2fa/setup";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processGet2faSetup(_response));
+        });
+    }
+
+    protected processGet2faSetup(response: Response): Promise<TwoFactorSetupDto | null> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = resultData200 ? TwoFactorSetupDto.fromJS(resultData200) : null as any;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<TwoFactorSetupDto | null>(null as any);
+    }
+
+    enable2fa(enable2faDto: Enable2faDto): Promise<RecoveryCodesDto | null> {
+        let url_ = this.baseUrl + "/api/users/me/2fa/enable";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(enable2faDto);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processEnable2fa(_response));
+        });
+    }
+
+    protected processEnable2fa(response: Response): Promise<RecoveryCodesDto | null> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = resultData200 ? RecoveryCodesDto.fromJS(resultData200) : null as any;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<RecoveryCodesDto | null>(null as any);
+    }
+
+    disable2fa(): Promise<void> {
+        let url_ = this.baseUrl + "/api/users/me/2fa/disable";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "POST",
+            headers: {
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processDisable2fa(_response));
+        });
+    }
+
+    protected processDisable2fa(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    generateRecoveryCodes(): Promise<RecoveryCodesDto | null> {
+        let url_ = this.baseUrl + "/api/users/me/2fa/recovery-codes";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "POST",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processGenerateRecoveryCodes(_response));
+        });
+    }
+
+    protected processGenerateRecoveryCodes(response: Response): Promise<RecoveryCodesDto | null> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = resultData200 ? RecoveryCodesDto.fromJS(resultData200) : null as any;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<RecoveryCodesDto | null>(null as any);
+    }
 }
 
 export class AdminClient extends ClientBase {
@@ -1009,6 +1205,84 @@ export class AdminClient extends ClientBase {
         }
         return Promise.resolve<RoleInfo[] | null>(null as any);
     }
+
+    admin_ResetUser2faById(userId: string): Promise<void> {
+        let url_ = this.baseUrl + "/api/Admin/users/{userId}/2fa/reset";
+        if (userId === undefined || userId === null)
+            throw new globalThis.Error("The parameter 'userId' must be defined.");
+        url_ = url_.replace("{userId}", encodeURIComponent("" + userId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "POST",
+            headers: {
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processAdmin_ResetUser2faById(_response));
+        });
+    }
+
+    protected processAdmin_ResetUser2faById(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    admin_ResetUser2faByEmail(email: string): Promise<void> {
+        let url_ = this.baseUrl + "/api/Admin/users/email/{email}/2fa/reset";
+        if (email === undefined || email === null)
+            throw new globalThis.Error("The parameter 'email' must be defined.");
+        url_ = url_.replace("{email}", encodeURIComponent("" + email));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "POST",
+            headers: {
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processAdmin_ResetUser2faByEmail(_response));
+        });
+    }
+
+    protected processAdmin_ResetUser2faByEmail(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
 }
 
 export class ExternalClient extends ClientBase {
@@ -1712,6 +1986,7 @@ export class UserDto implements IUserDto {
     id?: string;
     userName?: string;
     email?: string;
+    twoFactorEnabled?: boolean;
 
     constructor(data?: IUserDto) {
         if (data) {
@@ -1727,6 +2002,7 @@ export class UserDto implements IUserDto {
             this.id = _data["id"];
             this.userName = _data["userName"];
             this.email = _data["email"];
+            this.twoFactorEnabled = _data["twoFactorEnabled"];
         }
     }
 
@@ -1742,6 +2018,7 @@ export class UserDto implements IUserDto {
         data["id"] = this.id;
         data["userName"] = this.userName;
         data["email"] = this.email;
+        data["twoFactorEnabled"] = this.twoFactorEnabled;
         return data;
     }
 }
@@ -1750,6 +2027,7 @@ export interface IUserDto {
     id?: string;
     userName?: string;
     email?: string;
+    twoFactorEnabled?: boolean;
 }
 
 export class UpdateUserDto implements IUpdateUserDto {
@@ -1826,6 +2104,170 @@ export class UpdatePasswordDto implements IUpdatePasswordDto {
 export interface IUpdatePasswordDto {
     currentPassword?: string;
     newPassword?: string;
+}
+
+export class TwoFactorStatusDto implements ITwoFactorStatusDto {
+    is2faEnabled?: boolean;
+    hasAuthenticator?: boolean;
+    recoveryCodesLeft?: number;
+
+    constructor(data?: ITwoFactorStatusDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.is2faEnabled = _data["is2faEnabled"];
+            this.hasAuthenticator = _data["hasAuthenticator"];
+            this.recoveryCodesLeft = _data["recoveryCodesLeft"];
+        }
+    }
+
+    static fromJS(data: any): TwoFactorStatusDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new TwoFactorStatusDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["is2faEnabled"] = this.is2faEnabled;
+        data["hasAuthenticator"] = this.hasAuthenticator;
+        data["recoveryCodesLeft"] = this.recoveryCodesLeft;
+        return data;
+    }
+}
+
+export interface ITwoFactorStatusDto {
+    is2faEnabled?: boolean;
+    hasAuthenticator?: boolean;
+    recoveryCodesLeft?: number;
+}
+
+export class TwoFactorSetupDto implements ITwoFactorSetupDto {
+    sharedKey?: string;
+    authenticatorUri?: string;
+
+    constructor(data?: ITwoFactorSetupDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.sharedKey = _data["sharedKey"];
+            this.authenticatorUri = _data["authenticatorUri"];
+        }
+    }
+
+    static fromJS(data: any): TwoFactorSetupDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new TwoFactorSetupDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["sharedKey"] = this.sharedKey;
+        data["authenticatorUri"] = this.authenticatorUri;
+        return data;
+    }
+}
+
+export interface ITwoFactorSetupDto {
+    sharedKey?: string;
+    authenticatorUri?: string;
+}
+
+export class RecoveryCodesDto implements IRecoveryCodesDto {
+    recoveryCodes?: string[];
+
+    constructor(data?: IRecoveryCodesDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["recoveryCodes"])) {
+                this.recoveryCodes = [] as any;
+                for (let item of _data["recoveryCodes"])
+                    this.recoveryCodes!.push(item);
+            }
+        }
+    }
+
+    static fromJS(data: any): RecoveryCodesDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new RecoveryCodesDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.recoveryCodes)) {
+            data["recoveryCodes"] = [];
+            for (let item of this.recoveryCodes)
+                data["recoveryCodes"].push(item);
+        }
+        return data;
+    }
+}
+
+export interface IRecoveryCodesDto {
+    recoveryCodes?: string[];
+}
+
+export class Enable2faDto implements IEnable2faDto {
+    code?: string;
+
+    constructor(data?: IEnable2faDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.code = _data["code"];
+        }
+    }
+
+    static fromJS(data: any): Enable2faDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new Enable2faDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["code"] = this.code;
+        return data;
+    }
+}
+
+export interface IEnable2faDto {
+    code?: string;
 }
 
 export class ResultPageOfUserDto implements IResultPageOfUserDto {

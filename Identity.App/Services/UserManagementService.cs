@@ -5,6 +5,7 @@ using Identity.App.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Encodings.Web;
 
 namespace Identity.App.Services;
 
@@ -34,6 +35,7 @@ public class UserManagementService
             Id = user.Id,
             Email = user.Email ?? "",
             UserName = user.UserName ?? "",
+            TwoFactorEnabled = user.TwoFactorEnabled,
         });
     }
 
@@ -51,6 +53,7 @@ public class UserManagementService
             Id = user.Id,
             Email = user.Email ?? "",
             UserName = user.UserName ?? "",
+            TwoFactorEnabled = user.TwoFactorEnabled,
         });
     }
 
@@ -85,6 +88,7 @@ public class UserManagementService
                 Id = x.Id,
                 Email = x.Email ?? "",
                 UserName = x.UserName ?? "",
+                TwoFactorEnabled = x.TwoFactorEnabled,
             })
             .ToListAsync();
 
@@ -123,6 +127,7 @@ public class UserManagementService
             Id = user.Id,
             Email = user.Email ?? "",
             UserName = user.UserName ?? "",
+            TwoFactorEnabled = user.TwoFactorEnabled,
         });
     }
 
@@ -163,6 +168,7 @@ public class UserManagementService
             Id = user.Id,
             Email = user.Email ?? "",
             UserName = user.UserName ?? "",
+            TwoFactorEnabled = user.TwoFactorEnabled,
         });
     }
 
@@ -198,6 +204,7 @@ public class UserManagementService
             Id = user.Id,
             Email = user.Email ?? "",
             UserName = user.UserName ?? "",
+            TwoFactorEnabled = user.TwoFactorEnabled,
         });
     }
 
@@ -293,5 +300,127 @@ public class UserManagementService
             return result.Succeeded;
         }
         return true;
+    }
+
+    // Two-Factor Authentication Methods
+
+    public async Task<EndPoints.Users.Models.TwoFactorStatusDto?> GetTwoFactorStatusAsync(ApplicationUser? user)
+    {
+        if (user == null) return null;
+
+        var hasAuthenticator = await _userManager.GetAuthenticatorKeyAsync(user) != null;
+        var recoveryCodesLeft = await _userManager.CountRecoveryCodesAsync(user);
+
+        return new EndPoints.Users.Models.TwoFactorStatusDto
+        {
+            Is2faEnabled = user.TwoFactorEnabled,
+            HasAuthenticator = hasAuthenticator,
+            RecoveryCodesLeft = recoveryCodesLeft
+        };
+    }
+
+    public async Task<EndPoints.Users.Models.TwoFactorSetupDto?> LoadSharedKeyAndQrCodeUriAsync(ApplicationUser? user, string appName)
+    {
+        if (user == null || user.Email == null) return null;
+
+        var unformattedKey = await _userManager.GetAuthenticatorKeyAsync(user);
+        if (string.IsNullOrEmpty(unformattedKey))
+        {
+            await _userManager.ResetAuthenticatorKeyAsync(user);
+            unformattedKey = await _userManager.GetAuthenticatorKeyAsync(user);
+        }
+
+        if (unformattedKey == null) return null;
+
+        var sharedKey = FormatKey(unformattedKey);
+        var authenticatorUri = GenerateQrCodeUri(user.Email, unformattedKey, appName);
+
+        return new EndPoints.Users.Models.TwoFactorSetupDto
+        {
+            SharedKey = sharedKey,
+            AuthenticatorUri = authenticatorUri
+        };
+    }
+
+    public async Task<(bool Success, IEnumerable<string>? RecoveryCodes)> EnableTwoFactorAsync(ApplicationUser? user, string verificationCode)
+    {
+        if (user == null) return (false, null);
+
+        var is2faTokenValid = await _userManager.VerifyTwoFactorTokenAsync(
+            user, _userManager.Options.Tokens.AuthenticatorTokenProvider, verificationCode);
+
+        if (!is2faTokenValid)
+        {
+            return (false, null);
+        }
+
+        await _userManager.SetTwoFactorEnabledAsync(user, true);
+        
+        var recoveryCodes = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
+        return (true, recoveryCodes);
+    }
+
+    public async Task<bool> DisableTwoFactorAsync(ApplicationUser? user)
+    {
+        if (user == null) return false;
+
+        var result = await _userManager.SetTwoFactorEnabledAsync(user, false);
+        return result.Succeeded;
+    }
+
+    public async Task<IEnumerable<string>?> GenerateNewRecoveryCodesAsync(ApplicationUser? user)
+    {
+        if (user == null) return null;
+
+        var recoveryCodes = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
+        return recoveryCodes;
+    }
+
+    public async Task<bool> ResetTwoFactorByIdAsync(string userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        return await ResetTwoFactorAsync(user);
+    }
+
+    public async Task<bool> ResetTwoFactorByEmailAsync(string email)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+        return await ResetTwoFactorAsync(user);
+    }
+
+    private async Task<bool> ResetTwoFactorAsync(ApplicationUser? user)
+    {
+        if (user == null) return false;
+
+        await _userManager.SetTwoFactorEnabledAsync(user, false);
+        await _userManager.ResetAuthenticatorKeyAsync(user);
+        return true;
+    }
+
+    private static string FormatKey(string unformattedKey)
+    {
+        var result = new System.Text.StringBuilder();
+        int currentPosition = 0;
+        while (currentPosition + 4 < unformattedKey.Length)
+        {
+            result.Append(unformattedKey.AsSpan(currentPosition, 4)).Append(' ');
+            currentPosition += 4;
+        }
+        if (currentPosition < unformattedKey.Length)
+        {
+            result.Append(unformattedKey.AsSpan(currentPosition));
+        }
+
+        return result.ToString().ToLowerInvariant();
+    }
+
+    private static string GenerateQrCodeUri(string email, string unformattedKey, string appName)
+    {
+        return string.Format(
+            System.Globalization.CultureInfo.InvariantCulture,
+            "otpauth://totp/{0}:{1}?secret={2}&issuer={0}&digits=6",
+            UrlEncoder.Default.Encode(appName),
+            UrlEncoder.Default.Encode(email),
+            unformattedKey);
     }
 }

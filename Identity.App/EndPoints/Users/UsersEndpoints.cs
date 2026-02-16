@@ -1,5 +1,6 @@
 ﻿using Identity.App.Data;
 using Identity.App.EndPoints.Users.Models;
+using Identity.App.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -28,6 +29,21 @@ public static class UsersEndpoints
         group.MapGet("me/roles", GetCurrentUserRolesHandler)
             .WithName("GetCurrentUserRoles");
 
+        group.MapGet("me/2fa/status", Get2faStatusHandler)
+            .WithName("Get2faStatus");
+
+        group.MapGet("me/2fa/setup", Get2faSetupHandler)
+            .WithName("Get2faSetup");
+
+        group.MapPost("me/2fa/enable", Enable2faHandler)
+            .WithName("Enable2fa");
+
+        group.MapPost("me/2fa/disable", Disable2faHandler)
+            .WithName("Disable2fa");
+
+        group.MapPost("me/2fa/recovery-codes", GenerateRecoveryCodesHandler)
+            .WithName("GenerateRecoveryCodes");
+
         return app;
     }
 
@@ -44,6 +60,7 @@ public static class UsersEndpoints
             Id = user.Id,
             Email = user.Email,
             UserName = user.UserName,
+            TwoFactorEnabled = user.TwoFactorEnabled,
         });
     }
 
@@ -76,6 +93,7 @@ public static class UsersEndpoints
             Id = user.Id,
             Email = user.Email ?? "",
             UserName = user.UserName ?? "",
+            TwoFactorEnabled = user.TwoFactorEnabled,
         });
     }
 
@@ -114,6 +132,124 @@ public static class UsersEndpoints
 
         var roles = await userManager.GetRolesAsync(user);
         return TypedResults.Ok(roles);
+    }
+
+    // Two-Factor Authentication Handlers
+
+    private static async Task<Results<Ok<TwoFactorStatusDto>, ForbidHttpResult, UnauthorizedHttpResult>> Get2faStatusHandler(
+        HttpContext httpContext,
+        UserManager<ApplicationUser> userManager,
+        UserManagementService userManagementService)
+    {
+        if (httpContext.User?.Identity?.IsAuthenticated != true)
+            return TypedResults.Unauthorized();
+
+        var user = await userManager.GetUserAsync(httpContext.User);
+        if (user is null)
+            return TypedResults.Forbid();
+
+        var status = await userManagementService.GetTwoFactorStatusAsync(user);
+        if (status is null)
+            return TypedResults.Forbid();
+
+        return TypedResults.Ok(status);
+    }
+
+    private static async Task<Results<Ok<TwoFactorSetupDto>, ForbidHttpResult, UnauthorizedHttpResult, BadRequest>> Get2faSetupHandler(
+        HttpContext httpContext,
+        UserManager<ApplicationUser> userManager,
+        UserManagementService userManagementService,
+        IConfiguration configuration)
+    {
+        if (httpContext.User?.Identity?.IsAuthenticated != true)
+            return TypedResults.Unauthorized();
+
+        var user = await userManager.GetUserAsync(httpContext.User);
+        if (user is null)
+            return TypedResults.Forbid();
+
+        if (user.TwoFactorEnabled)
+            return TypedResults.BadRequest();
+
+        var appName = configuration["ApplicationConfig:Name"] ?? "Identity App";
+        var setupInfo = await userManagementService.LoadSharedKeyAndQrCodeUriAsync(user, appName);
+        if (setupInfo is null)
+            return TypedResults.Forbid();
+
+        return TypedResults.Ok(setupInfo);
+    }
+
+    private static async Task<Results<Ok<RecoveryCodesDto>, ForbidHttpResult, UnauthorizedHttpResult, BadRequest>> Enable2faHandler(
+        [FromBody] Enable2faDto enable2faDto,
+        HttpContext httpContext,
+        UserManager<ApplicationUser> userManager,
+        UserManagementService userManagementService)
+    {
+        if (httpContext.User?.Identity?.IsAuthenticated != true)
+            return TypedResults.Unauthorized();
+
+        var user = await userManager.GetUserAsync(httpContext.User);
+        if (user is null)
+            return TypedResults.Forbid();
+
+        if (user.TwoFactorEnabled)
+            return TypedResults.BadRequest();
+
+        var (success, recoveryCodes) = await userManagementService.EnableTwoFactorAsync(user, enable2faDto.Code);
+        if (!success || recoveryCodes is null)
+            return TypedResults.BadRequest();
+
+        return TypedResults.Ok(new RecoveryCodesDto
+        {
+            RecoveryCodes = recoveryCodes
+        });
+    }
+
+    private static async Task<Results<Ok, ForbidHttpResult, UnauthorizedHttpResult, BadRequest>> Disable2faHandler(
+        HttpContext httpContext,
+        UserManager<ApplicationUser> userManager,
+        UserManagementService userManagementService)
+    {
+        if (httpContext.User?.Identity?.IsAuthenticated != true)
+            return TypedResults.Unauthorized();
+
+        var user = await userManager.GetUserAsync(httpContext.User);
+        if (user is null)
+            return TypedResults.Forbid();
+
+        if (!user.TwoFactorEnabled)
+            return TypedResults.BadRequest();
+
+        var success = await userManagementService.DisableTwoFactorAsync(user);
+        if (!success)
+            return TypedResults.BadRequest();
+
+        return TypedResults.Ok();
+    }
+
+    private static async Task<Results<Ok<RecoveryCodesDto>, ForbidHttpResult, UnauthorizedHttpResult, BadRequest>> GenerateRecoveryCodesHandler(
+        HttpContext httpContext,
+        UserManager<ApplicationUser> userManager,
+        UserManagementService userManagementService)
+    {
+        if (httpContext.User?.Identity?.IsAuthenticated != true)
+            return TypedResults.Unauthorized();
+
+        var user = await userManager.GetUserAsync(httpContext.User);
+        if (user is null)
+            return TypedResults.Forbid();
+
+        if (!user.TwoFactorEnabled)
+            return TypedResults.BadRequest();
+
+        var recoveryCodes = await userManagementService.GenerateNewRecoveryCodesAsync(user);
+        if (recoveryCodes is null)
+            return TypedResults.BadRequest();
+
+        return TypedResults.Ok(new RecoveryCodesDto
+        {
+            RecoveryCodes = recoveryCodes
+        });
     }
 
 }

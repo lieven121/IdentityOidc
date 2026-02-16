@@ -68,6 +68,13 @@ public static class AdminEndpoints
         group.MapGet("roles", GetAllRolesHandler)
             .WithName("Admin/GetAllRoles");
 
+        // Two-Factor Authentication reset endpoints
+        group.MapPost("users/{userId}/2fa/reset", ResetUser2faByIdHandler)
+            .WithName("Admin/ResetUser2faById");
+
+        group.MapPost("users/email/{email}/2fa/reset", ResetUser2faByEmailHandler)
+            .WithName("Admin/ResetUser2faByEmail");
+
         return app;
     }
 
@@ -234,6 +241,28 @@ public static class AdminEndpoints
             .ToList();
 
         return TypedResults.Ok(roles);
+    }
+
+    // Two-Factor Authentication Reset Handlers
+
+    private static async Task<Results<Ok, NotFound>> ResetUser2faByIdHandler(
+        [FromRoute] string userId,
+        UserManagementService userManagementService)
+    {
+        var result = await userManagementService.ResetTwoFactorByIdAsync(userId);
+        if (!result)
+            return TypedResults.NotFound();
+        return TypedResults.Ok();
+    }
+
+    private static async Task<Results<Ok, NotFound>> ResetUser2faByEmailHandler(
+        [FromRoute] string email,
+        UserManagementService userManagementService)
+    {
+        var result = await userManagementService.ResetTwoFactorByEmailAsync(email);
+        if (!result)
+            return TypedResults.NotFound();
+        return TypedResults.Ok();
     }
 
     
