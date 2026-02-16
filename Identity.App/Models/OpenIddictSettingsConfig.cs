@@ -7,6 +7,7 @@ public class OpenIddictSettingsConfig
     public EncryptionConfig Signing { get; set; }
 
     public IEnumerable<ApplicationConfig> ApplicationConfigs { get; set; }
+    public IEnumerable<string> Roles { get; set; }
 }
 
 public class EncryptionConfig

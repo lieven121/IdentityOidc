@@ -58,7 +58,8 @@ public static class OpenIdConnectEndpoints
     private static async Task<IResult> AuthorizeHandler(HttpContext httpContext,
            SignInManager<ApplicationUser> signInManager,
            UserManager<ApplicationUser> userManager,
-           IOpenIddictScopeManager scopeManager
+           IOpenIddictScopeManager scopeManager,
+           IOpenIddictApplicationManager applicationManager
            )
     {
         var user = httpContext.User;
@@ -77,15 +78,57 @@ public static class OpenIdConnectEndpoints
         if (user.Identity?.IsAuthenticated != true)
             return Results.Challenge();
 
+        var appUser = await userManager.GetUserAsync(user) ??
+                   throw new Exception();
+
+        // Check if application has required roles stored in database
+        var application = await applicationManager.FindByClientIdAsync(request.ClientId);
+        if (application != null)
+        {
+            var properties = await applicationManager.GetPropertiesAsync(application);
+            
+            if (properties.TryGetValue("RequiredRoles", out var rolesElement))
+            {
+                List<string>? requiredRoles = null;
+                
+                if (rolesElement is System.Text.Json.JsonElement jsonElement && 
+                    jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                {
+                    requiredRoles = jsonElement.EnumerateArray()
+                        .Where(e => e.ValueKind == System.Text.Json.JsonValueKind.String)
+                        .Select(e => e.GetString() ?? "")
+                        .Where(s => !string.IsNullOrWhiteSpace(s))
+                        .ToList();
+                }
+
+                if (requiredRoles != null && requiredRoles.Any())
+                {
+                    var userRoles = await userManager.GetRolesAsync(appUser);
+                    var hasRequiredRole = requiredRoles.Any(requiredRole => 
+                        userRoles.Contains(requiredRole, StringComparer.OrdinalIgnoreCase));
+
+                    if (!hasRequiredRole)
+                    {
+                        return Results.Forbid(
+                            authenticationSchemes: new[] { OpenIddictServerAspNetCoreDefaults.AuthenticationScheme },
+                            properties: new Microsoft.AspNetCore.Authentication.AuthenticationProperties(
+                                new Dictionary<string, string>
+                                {
+                                    [OpenIddictServerAspNetCoreConstants.Properties.Error] = OpenIddictConstants.Errors.AccessDenied,
+                                    [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] = 
+                                        $"User does not have required role(s): {string.Join(", ", requiredRoles)}"
+                                }));
+                    }
+                }
+            }
+        }
+
         var claims = new List<Claim>
             {
                 new Claim(Claims.Subject, user.Identity.Name)
             };
 
         var identity = new ClaimsIdentity(claims, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
-
-        var appUser = await userManager.GetUserAsync(user) ??
-                   throw new Exception();
 
         var principal = await signInManager.CreateUserPrincipalAsync(appUser);
 

@@ -1,5 +1,6 @@
 using Identity.App.Data;
 using Identity.App.EndPoints;
+using Identity.App.EndPoints.Admin;
 using Identity.App.EndPoints.External;
 using Identity.App.EndPoints.Identity;
 using Identity.App.EndPoints.OpenIdConnect;
@@ -57,6 +58,7 @@ var apiEnpoints = app
 
 apiEnpoints.MapStatusEndpoints();
 apiEnpoints.MapUsersEndpoints();
+apiEnpoints.MapAdminEndpoints();
 apiEnpoints.MapExternalEndpoints();
 
 apiEnpoints.MapIdentityEndpoints();

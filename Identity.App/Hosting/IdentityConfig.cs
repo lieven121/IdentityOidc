@@ -26,6 +26,7 @@ public static class IdentityConfig
                 options.User.RequireUniqueEmail = true;
 
             })
+            .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddSignInManager()
             .AddDefaultTokenProviders();

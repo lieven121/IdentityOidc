@@ -25,6 +25,9 @@ public static class UsersEndpoints
         group.MapPost("me/password", UpdatePasswordHandler)
             .WithName("UpdatePassword");
 
+        group.MapGet("me/roles", GetCurrentUserRolesHandler)
+            .WithName("GetCurrentUserRoles");
+
         return app;
     }
 
@@ -96,6 +99,21 @@ public static class UsersEndpoints
         }
 
         return TypedResults.Ok();
+    }
+
+    private static async Task<Results<Ok<IList<string>>, ForbidHttpResult, UnauthorizedHttpResult>> GetCurrentUserRolesHandler(
+        HttpContext httpContext,
+        UserManager<ApplicationUser> userManager)
+    {
+        if (httpContext.User?.Identity?.IsAuthenticated != true)
+            return TypedResults.Unauthorized();
+
+        var user = await userManager.GetUserAsync(httpContext.User);
+        if (user is null)
+            return TypedResults.Forbid();
+
+        var roles = await userManager.GetRolesAsync(user);
+        return TypedResults.Ok(roles);
     }
 
 }
