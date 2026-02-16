@@ -1,4 +1,5 @@
 import './assets/main.css'
+import './assets/font-awesome/index.scss'
 
 import { createApp } from 'vue'
 
