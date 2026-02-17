@@ -1,57 +1,51 @@
 <script setup lang="ts">
-interface Role {
-  id: string
-  name: string
-  description: string
-  userCount: number
-  permissions: string[]
-  isDefault?: boolean
+import { AdminClient, RoleInfo } from '@/resources/api-clients/identity-api-client'
+
+const adminClient = new AdminClient()
+
+interface RoleDetails extends RoleInfo {
+  userCount?: number
 }
 
-const roles = ref<Role[]>([
-  {
-    id: '1',
-    name: 'Admin',
-    description: 'Full system access with all administrative privileges',
-    userCount: 3,
-    permissions: ['users.manage', 'roles.manage', 'applications.manage', 'system.configure'],
-    isDefault: false
-  },
-  {
-    id: '2',
-    name: 'User',
-    description: 'Standard user access',
-    userCount: 47,
-    permissions: ['profile.read', 'profile.update'],
-    isDefault: true
-  },
-  {
-    id: '3',
-    name: 'Moderator',
-    description: 'Can moderate content and manage basic user actions',
-    userCount: 5,
-    permissions: ['users.read', 'content.moderate'],
-    isDefault: false
-  }
-])
-
-const selectedRole = ref<Role | null>(null)
+const roles = ref<RoleDetails[]>([])
+const isLoading = ref(false)
+const selectedRole = ref<RoleDetails | null>(null)
 const showRoleDialog = ref(false)
-// const isLoading = ref(false)
 
-const viewRole = (role: Role) => {
-  selectedRole.value = { ...role }
+const canEdit = false
+
+const loadRoles = async () => {
+  isLoading.value = true
+  try {
+    const roleInfos = await adminClient.admin_GetAllRoles()
+    if (roleInfos) {
+      roles.value = roleInfos.map(role => (new RoleInfo({
+        ...role,
+      })))
+    }
+  } catch (error) {
+    console.error('Failed to load roles:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => {
+  loadRoles()
+})
+
+const viewRole = (role: RoleDetails) => {
+  selectedRole.value = new RoleInfo({
+    ...role
+  })
   showRoleDialog.value = true
 }
 
 const createRole = () => {
-  selectedRole.value = {
+  selectedRole.value = new RoleInfo({
     id: '',
     name: '',
-    description: '',
-    userCount: 0,
-    permissions: []
-  }
+  })
   showRoleDialog.value = true
 }
 </script>
@@ -65,6 +59,7 @@ const createRole = () => {
           <h1>Role Management</h1>
         </div>
         <Button
+          v-if="canEdit"
           label="Create Role"
           icon="fa-duotone fa-plus"
           severity="success"
@@ -78,82 +73,58 @@ const createRole = () => {
           Define and manage roles to control user permissions and access levels across the platform.
         </p>
 
-        <template
-          v-for="(role, index) in roles"
-          :key="role.id"
+        <div
+          v-if="isLoading"
+          class="loading-state"
         >
-          <Divider v-if="index > 0" />
+          <ProgressSpinner />
+          <p>Loading roles...</p>
+        </div>
 
-          <div class="role-section">
-            <div class="subsection-header">
-              <div class="subsection-title">
-                <h3>{{ role.name }}</h3>
-                <Tag
-                  v-if="role.isDefault"
-                  value="Default"
-                  severity="info"
-                />
-              </div>
-              <div class="subsection-actions">
-                <Button
-                  icon="fa-duotone fa-eye"
-                  text
-                  rounded
-                  severity="info"
-                  @click="viewRole(role)"
-                  v-tooltip.top="'View Details'"
-                />
-                <Button
-                  icon="fa-duotone fa-pen"
-                  text
-                  rounded
-                  severity="warning"
-                  @click="() => { }"
-                  v-tooltip.top="'Edit'"
-                />
-                <Button
-                  v-if="!role.isDefault"
-                  icon="fa-duotone fa-trash"
-                  text
-                  rounded
-                  severity="danger"
-                  @click="() => { }"
-                  v-tooltip.top="'Delete'"
-                />
-              </div>
-            </div>
+        <template v-else>
+          <template
+            v-for="(role, index) in roles"
+            :key="role.id"
+          >
+            <Divider v-if="index > 0" />
 
-            <div class="role-details-section">
-              <p class="role-description">{{ role.description }}</p>
-
-              <div class="role-stats">
-                <div class="stat">
-                  <i class="fa-duotone fa-users"></i>
-                  <span>{{ role.userCount }} users</span>
+            <div class="role-section">
+              <div class="subsection-header">
+                <div class="subsection-title">
+                  <h3>{{ role.name }}</h3>
                 </div>
-                <div class="stat">
-                  <i class="fa-duotone fa-shield"></i>
-                  <span>{{ role.permissions.length }} permissions</span>
-                </div>
-              </div>
-
-              <div class="permissions-preview">
-                <h4>Permissions</h4>
-                <div class="permissions-list">
-                  <Chip
-                    v-for="(permission, permIndex) in role.permissions.slice(0, 4)"
-                    :key="permIndex"
-                    :label="permission"
-                    class="permission-chip"
-                  />
-                  <Chip
-                    v-if="role.permissions.length > 4"
-                    :label="`+${role.permissions.length - 4} more`"
-                    class="permission-chip more"
+                <div
+                  class="subsection-actions"
+                  v-if="canEdit"
+                >
+                  <Button
+                    icon="fa-duotone fa-eye"
+                    text
+                    rounded
+                    severity="info"
+                    @click="viewRole(role)"
+                    v-tooltip.top="'View Details'"
                   />
                 </div>
               </div>
+
+              <!-- <div class="role-details-section">
+                <div class="role-stats">
+                  <div class="stat">
+                    <i class="fa-duotone fa-users"></i>
+                    <span>{{ role.userCount || 0 }} users</span>
+                  </div>
+                </div>
+              </div> -->
             </div>
+          </template>
+
+          <div
+            v-if="roles.length === 0"
+            class="empty-state"
+          >
+            <i class="fa-duotone fa-key"></i>
+            <p>No roles found</p>
           </div>
         </template>
       </div>
@@ -163,7 +134,7 @@ const createRole = () => {
   <!-- Role Details Dialog -->
   <Dialog
     v-model:visible="showRoleDialog"
-    :header="selectedRole?.name || 'New Role'"
+    :header="selectedRole?.name || 'Role Details'"
     :modal="true"
     :style="{ width: '50rem' }"
     :breakpoints="{ '960px': '75vw', '640px': '90vw' }"
@@ -175,30 +146,9 @@ const createRole = () => {
       <div class="detail-section">
         <label>Role Name</label>
         <InputText
-          v-model="selectedRole.name"
-          disabled
+          :value="selectedRole.name"
+          readonly
         />
-      </div>
-
-      <div class="detail-section">
-        <label>Description</label>
-        <Textarea
-          v-model="selectedRole.description"
-          disabled
-          rows="3"
-        />
-      </div>
-
-      <div class="detail-section">
-        <label>Permissions ({{ selectedRole.permissions.length }})</label>
-        <div class="permissions-full-list">
-          <Chip
-            v-for="(permission, index) in selectedRole.permissions"
-            :key="index"
-            :label="permission"
-            class="permission-chip"
-          />
-        </div>
       </div>
 
       <div class="detail-section">
@@ -207,15 +157,8 @@ const createRole = () => {
           <div class="stat-item">
             <i class="fa-duotone fa-users"></i>
             <div>
-              <span class="stat-value">{{ selectedRole.userCount }}</span>
+              <span class="stat-value">{{ selectedRole.userCount || 0 }}</span>
               <span class="stat-label">Users</span>
-            </div>
-          </div>
-          <div class="stat-item">
-            <i class="fa-duotone fa-shield"></i>
-            <div>
-              <span class="stat-value">{{ selectedRole.permissions.length }}</span>
-              <span class="stat-label">Permissions</span>
             </div>
           </div>
         </div>
@@ -303,6 +246,17 @@ const createRole = () => {
   flex-direction: column;
   gap: 1.5rem;
 
+  .detail-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    label {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+  }
+
   .permissions-full-list {
     display: flex;
     flex-wrap: wrap;
@@ -313,6 +267,42 @@ const createRole = () => {
 
     .permission-chip {
       font-size: 0.85rem;
+    }
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: var(--surface-50);
+      border-radius: var(--border-radius);
+
+      i {
+        font-size: 1.5rem;
+        color: var(--primary-color);
+      }
+
+      div {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+
+        .stat-value {
+          font-size: 1.5rem;
+          font-weight: 600;
+        }
+
+        .stat-label {
+          font-size: 0.85rem;
+          color: var(--text-color-secondary);
+        }
+      }
     }
   }
 }

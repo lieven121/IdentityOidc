@@ -43,7 +43,7 @@ const router = createRouter({
         {
           path: 'security',
           name: RouteNames.Security,
-          component: () => import('../components/Account/SecuritySettings.vue'),
+          component: () => import('../components/Account/Security/SecuritySettings.vue'),
         },
         {
           path: 'admin/users',

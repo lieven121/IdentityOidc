@@ -1984,7 +1984,7 @@ export interface IStatusDto {
 
 export class UserDto implements IUserDto {
     id?: string;
-    userName?: string;
+    username?: string;
     email?: string;
     twoFactorEnabled?: boolean;
 
@@ -2000,7 +2000,7 @@ export class UserDto implements IUserDto {
     init(_data?: any) {
         if (_data) {
             this.id = _data["id"];
-            this.userName = _data["userName"];
+            this.username = _data["username"];
             this.email = _data["email"];
             this.twoFactorEnabled = _data["twoFactorEnabled"];
         }
@@ -2016,7 +2016,7 @@ export class UserDto implements IUserDto {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
-        data["userName"] = this.userName;
+        data["username"] = this.username;
         data["email"] = this.email;
         data["twoFactorEnabled"] = this.twoFactorEnabled;
         return data;
@@ -2025,7 +2025,7 @@ export class UserDto implements IUserDto {
 
 export interface IUserDto {
     id?: string;
-    userName?: string;
+    username?: string;
     email?: string;
     twoFactorEnabled?: boolean;
 }

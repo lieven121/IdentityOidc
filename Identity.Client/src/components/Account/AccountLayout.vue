@@ -101,13 +101,13 @@ watch(() => route.name, () => {
             <template #header>
               <div class="menu-header">
                 <Avatar
-                  :label="userStore.user?.userName?.[0]?.toUpperCase()"
+                  :label="userStore.user?.username?.[0]?.toUpperCase()"
                   size="xlarge"
                   shape="circle"
                   class="user-avatar"
                 />
                 <div class="user-info">
-                  <h2>{{ userStore.user?.userName }}</h2>
+                  <h2>{{ userStore.user?.username }}</h2>
                   <p>{{ userStore.user?.email }}</p>
                 </div>
               </div>
@@ -163,13 +163,13 @@ watch(() => route.name, () => {
               <template #header>
                 <div class="menu-header">
                   <Avatar
-                    :label="userStore.user?.userName?.[0]?.toUpperCase()"
+                    :label="userStore.user?.username?.[0]?.toUpperCase()"
                     size="xlarge"
                     shape="circle"
                     class="user-avatar"
                   />
                   <div class="user-info">
-                    <h2>{{ userStore.user?.userName }}</h2>
+                    <h2>{{ userStore.user?.username }}</h2>
                     <p>{{ userStore.user?.email }}</p>
                   </div>
                 </div>

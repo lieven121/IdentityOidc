@@ -64,7 +64,7 @@ const handleUpdate = async () => {
             <label for="username">Username</label>
             <InputText
               id="username"
-              v-model="user.userName"
+              v-model="user.username"
             />
             <small class="field-hint">This is how others will see you on the platform.</small>
           </div>

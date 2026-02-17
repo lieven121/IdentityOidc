@@ -59,7 +59,7 @@ public static class UsersEndpoints
         {
             Id = user.Id,
             Email = user.Email,
-            UserName = user.UserName,
+            Username = user.UserName,
             TwoFactorEnabled = user.TwoFactorEnabled,
         });
     }
@@ -92,7 +92,7 @@ public static class UsersEndpoints
         {
             Id = user.Id,
             Email = user.Email ?? "",
-            UserName = user.UserName ?? "",
+            Username = user.UserName ?? "",
             TwoFactorEnabled = user.TwoFactorEnabled,
         });
     }

@@ -1,100 +1,95 @@
 <script setup lang="ts">
-import { useToast } from 'primevue'
+import CopyField from '@/components/Common/CopyField.vue'
+import { AdminClient, ApplicationRoleInfo } from '@/resources/api-clients/identity-api-client'
 
-interface Application {
-  id: string
-  name: string
-  description: string
-  clientId: string
-  redirectUris: string[]
-  createdDate: Date
-  isActive: boolean
+const adminClient = new AdminClient()
+
+const applications = ref<ApplicationRoleInfo[]>([])
+const isLoading = ref(false)
+const selectedApp = ref<ApplicationRoleInfo | null>(null)
+const showAppDialog = ref(false)
+const appRequiredRoles = ref<string[]>([])
+// const isUpdatingRoles = ref(false)
+
+const canEdit = false
+
+const loadApplications = async () => {
+  isLoading.value = true
+  try {
+    const appInfos = await adminClient.admin_GetApplicationsWithRoles()
+    if (appInfos) {
+      applications.value = appInfos.map(app => new ApplicationRoleInfo({
+        ...app,
+      }))
+    }
+  } catch (error) {
+    console.error('Failed to load applications:', error)
+  } finally {
+    isLoading.value = false
+  }
 }
 
-const applications = ref<Application[]>([
-  {
-    id: '1',
-    name: 'Web Portal',
-    description: 'Main web application portal',
-    clientId: 'web-portal-client-001',
-    redirectUris: ['https://portal.example.com/callback', 'https://portal.example.com/silent-refresh'],
-    createdDate: new Date('2024-01-15'),
-    isActive: true
-  },
-  {
-    id: '2',
-    name: 'Mobile App',
-    description: 'iOS and Android mobile application',
-    clientId: 'mobile-app-client-002',
-    redirectUris: ['myapp://callback'],
-    createdDate: new Date('2024-03-22'),
-    isActive: true
-  },
-  {
-    id: '3',
-    name: 'Admin Dashboard',
-    description: 'Administrative management dashboard',
-    clientId: 'admin-dashboard-003',
-    redirectUris: ['https://admin.example.com/callback'],
-    createdDate: new Date('2024-02-10'),
-    isActive: false
+onMounted(() => {
+  loadApplications()
+})
+
+const viewApplication = async (app: ApplicationRoleInfo) => {
+  selectedApp.value = new ApplicationRoleInfo({ ...app })
+  try {
+    if (app.clientId) {
+      appRequiredRoles.value = (await adminClient.admin_GetApplicationRequiredRoles(app.clientId)) || []
+    }
+  } catch (error) {
+    console.error('Failed to load application roles:', error)
+    appRequiredRoles.value = []
   }
-])
-
-const selectedApp = ref<Application | null>(null)
-const showAppDialog = ref(false)
-
-const toast = useToast();
-// const isLoading = ref(false)
-
-const viewApplication = (app: Application) => {
-  selectedApp.value = { ...app }
   showAppDialog.value = true
 }
 
 const createApplication = () => {
-  selectedApp.value = {
-    id: '',
-    name: '',
-    description: '',
+  selectedApp.value = new ApplicationRoleInfo({
     clientId: '',
-    redirectUris: [],
-    createdDate: new Date(),
-    isActive: true
-  }
+    displayName: '',
+    requiredRoles: [],
+  })
   showAppDialog.value = true
 }
 
-const formatDate = (date: Date) => {
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
-}
 
-const toggleAppStatus = (app: Application) => {
-  app.isActive = !app.isActive
-}
+// const toggleAppStatus = async (app: ApplicationRoleInfo) => {
+//   app.isActive = !app.isActive
+// }
 
-const { isSupported, copy, copied } = useClipboard()
-const copyToClipboard = (text: string) => {
-  if (isSupported.value) {
-    copy(text)
-  }
-}
+// const addRoleToApplication = async (role: string) => {
+//   if (!selectedApp.value?.clientId) return
 
-watch(copied, (newValue) => {
-  if (newValue) {
-    toast.add({
-      severity: 'info',
-      summary: 'Copied to clipboard',
-      detail: 'The value has been copied successfully.',
-      life: 3000,
-      group: 'notifications'
-    })
-  }
-})
+//   isUpdatingRoles.value = true
+//   try {
+//     appRequiredRoles.value.push(role)
+//     await adminClient.admin_UpdateApplicationRequiredRoles(selectedApp.value.clientId, appRequiredRoles.value)
+//   } catch (error) {
+//     console.error('Failed to add role:', error)
+//     appRequiredRoles.value = appRequiredRoles.value.filter(r => r !== role)
+//   } finally {
+//     isUpdatingRoles.value = false
+//   }
+// }
+
+// const removeRoleFromApplication = async (role: string) => {
+//   if (!selectedApp.value?.clientId) return
+
+//   isUpdatingRoles.value = true
+//   try {
+//     appRequiredRoles.value = appRequiredRoles.value.filter(r => r !== role)
+//     await adminClient.admin_UpdateApplicationRequiredRoles(selectedApp.value.clientId, appRequiredRoles.value)
+//   } catch (error) {
+//     console.error('Failed to remove role:', error)
+//   } finally {
+//     isUpdatingRoles.value = false
+//   }
+// }
+
+
 
 </script>
 
@@ -107,6 +102,7 @@ watch(copied, (newValue) => {
           <h1>Application Management</h1>
         </div>
         <Button
+          v-if="canEdit"
           label="Register Application"
           icon="fa-duotone fa-plus"
           severity="success"
@@ -120,89 +116,76 @@ watch(copied, (newValue) => {
           Manage OAuth/OIDC applications, client credentials, and redirect URIs for integrated services.
         </p>
 
-        <template
-          v-for="(app, index) in applications"
-          :key="app.id"
+        <div
+          v-if="isLoading"
+          class="loading-state"
         >
-          <Divider v-if="index > 0" />
+          <ProgressSpinner />
+          <p>Loading applications...</p>
+        </div>
 
-          <div class="app-section">
-            <div class="subsection-header">
-              <div class="subsection-title">
-                <h3>{{ app.name }}</h3>
-                <Tag
-                  :value="app.isActive ? 'Active' : 'Inactive'"
-                  :severity="app.isActive ? 'success' : 'secondary'"
-                />
-              </div>
-              <div class="subsection-actions">
-                <Button
-                  icon="fa-duotone fa-eye"
-                  text
-                  rounded
-                  severity="info"
-                  @click="viewApplication(app)"
-                  v-tooltip.top="'View Details'"
-                />
-                <Button
-                  icon="fa-duotone fa-pen"
-                  text
-                  rounded
-                  severity="warning"
-                  @click="() => { }"
-                  v-tooltip.top="'Edit'"
-                />
-                <Button
-                  :icon="app.isActive ? 'fa-duotone fa-ban' : 'fa-duotone fa-check'"
-                  text
-                  rounded
-                  :severity="app.isActive ? 'danger' : 'success'"
-                  @click="toggleAppStatus(app)"
-                  v-tooltip.top="app.isActive ? 'Disable' : 'Enable'"
-                />
-              </div>
-            </div>
+        <template v-else>
+          <template
+            v-for="(app, index) in applications"
+            :key="app.clientId"
+          >
+            <Divider v-if="index > 0" />
 
-            <div class="app-details-section">
-              <p class="app-description">{{ app.description }}</p>
-
-              <div class="detail-item">
-                <label>Client ID</label>
-                <div class="value-with-copy">
-                  <code>{{ app.clientId }}</code>
+            <div class="app-section">
+              <div class="subsection-header">
+                <div class="subsection-title">
+                  <h3>{{ app.displayName }}</h3>
+                  <Tag
+                    :value="true ? 'Active' : 'Inactive'"
+                    :severity="true ? 'success' : 'secondary'"
+                  />
+                </div>
+                <div class="subsection-actions">
                   <Button
-                    icon="fa-duotone fa-copy"
+                    icon="fa-duotone fa-eye"
                     text
-                    size="small"
-                    v-tooltip.top="'Copy Client ID'"
-                    :disabled="!isSupported"
-                    @click="() => copyToClipboard(app.clientId)"
+                    rounded
+                    severity="info"
+                    @click="viewApplication(app)"
+                    v-tooltip.top="'View Details'"
                   />
                 </div>
               </div>
 
-              <div class="detail-item">
-                <label>Redirect URIs ({{ app.redirectUris.length }})</label>
-                <div class="redirect-uris">
-                  <Chip
-                    v-for="(uri, uriIndex) in app.redirectUris.slice(0, 2)"
-                    :key="uriIndex"
-                    :label="uri"
-                    class="uri-chip"
-                  />
-                  <Chip
-                    v-if="app.redirectUris.length > 2"
-                    :label="`+${app.redirectUris.length - 2} more`"
-                    class="uri-chip more"
-                  />
-                </div>
-              </div>
+              <div class="app-details-section">
+                <CopyField
+                  label="Client ID"
+                  :value="app.clientId || ''"
+                />
 
-              <div class="detail-item">
-                <label>Created</label>
-                <span>{{ formatDate(app.createdDate) }}</span>
+                <div class="detail-item">
+                  <label>Required Roles ({{ app.requiredRoles?.length || 0 }})</label>
+                  <div class="roles-section">
+                    <Tag
+                      v-for="role in app.requiredRoles"
+                      :key="role"
+                      :value="role"
+                    />
+                    <span
+                      v-if="!app.requiredRoles || app.requiredRoles.length === 0"
+                      class="no-roles"
+                    >
+                      No roles required
+                    </span>
+                  </div>
+                </div>
+
+
               </div>
             </div>
+          </template>
+
+          <div
+            v-if="applications.length === 0"
+            class="empty-state"
+          >
+            <i class="fa-duotone fa-box"></i>
+            <p>No applications found</p>
           </div>
         </template>
       </div>
@@ -210,9 +193,9 @@ watch(copied, (newValue) => {
   </Card>
 
   <!-- Application Details Dialog -->
-  <Dialog
+  <!-- <Dialog
     v-model:visible="showAppDialog"
-    :header="selectedApp?.name || 'New Application'"
+    :header="selectedApp?.displayName || 'Application Details'"
     :modal="true"
     :style="{ width: '50rem' }"
     :breakpoints="{ '960px': '75vw', '640px': '90vw' }"
@@ -222,58 +205,26 @@ watch(copied, (newValue) => {
       class="app-dialog-content"
     >
       <div class="detail-section">
-        <label>Application Name</label>
-        <InputText
-          v-model="selectedApp.name"
-          disabled
-        />
-      </div>
-
-      <div class="detail-section">
-        <label>Description</label>
-        <Textarea
-          v-model="selectedApp.description"
-          disabled
-          rows="2"
-        />
-      </div>
-
-      <div class="detail-section">
         <label>Client ID</label>
-        <div class="value-with-copy">
-          <InputText
-            v-model="selectedApp.clientId"
-            disabled
-            style="flex: 1;"
-          />
-          <Button
-            icon="fa-duotone fa-copy"
-            outlined
-            v-tooltip.top="'Copy Client ID'"
-            :disabled="!isSupported"
-            @click="() => selectedApp && copyToClipboard(selectedApp.clientId)"
-          />
-        </div>
+        <CopyField :value="selectedApp.clientId || ''" />
       </div>
 
       <div class="detail-section">
-        <label>Redirect URIs</label>
-        <div class="redirect-uris-full">
-          <div
-            v-for="(uri, index) in selectedApp.redirectUris"
-            :key="index"
-            class="uri-item"
+        <label>Required Roles</label>
+        <div class="roles-section">
+          <Tag
+            v-for="role in appRequiredRoles"
+            :key="role"
+            :value="role"
+            :closable="canEdit"
+            @remove="() => removeRoleFromApplication(role)"
+          />
+          <span
+            v-if="appRequiredRoles.length === 0"
+            class="no-roles"
           >
-            <code>{{ uri }}</code>
-            <Button
-              icon="fa-duotone fa-copy"
-              text
-              size="small"
-              v-tooltip.top="'Copy URI'"
-              :disabled="!isSupported"
-              @click="() => copyToClipboard(uri)"
-            />
-          </div>
+            No roles required
+          </span>
         </div>
       </div>
 
@@ -299,11 +250,11 @@ watch(copied, (newValue) => {
         <label>Created Date</label>
         <InputText
           :value="formatDate(selectedApp.createdDate)"
-          disabled
+          readonly
         />
       </div>
     </div>
-  </Dialog>
+  </Dialog> -->
 </template>
 
 <style lang="scss" scoped>
@@ -351,6 +302,18 @@ watch(copied, (newValue) => {
     font-size: 0.9rem;
     color: var(--text-color-secondary);
   }
+
+  .roles-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+
+    .no-roles {
+      color: var(--text-color-secondary);
+      font-size: 0.9rem;
+      padding: 0.5rem 0;
+    }
+  }
 }
 
 .redirect-uris {
@@ -375,26 +338,25 @@ watch(copied, (newValue) => {
   flex-direction: column;
   gap: 1.5rem;
 
-  .redirect-uris-full {
+  .detail-section {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 
-    .uri-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.5rem;
-      padding: 0.75rem;
-      background: var(--surface-50);
-      border-radius: var(--border-radius);
+    label {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
 
-      code {
-        flex: 1;
-        background: transparent;
-        padding: 0;
-        font-size: 0.85rem;
-        word-break: break-all;
+    .roles-section {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+
+      .no-roles {
+        color: var(--text-color-secondary);
+        font-size: 0.9rem;
+        padding: 0.5rem 0;
       }
     }
   }

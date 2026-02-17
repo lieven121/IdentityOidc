@@ -34,7 +34,7 @@ public class UserManagementService
         {
             Id = user.Id,
             Email = user.Email ?? "",
-            UserName = user.UserName ?? "",
+            Username = user.UserName ?? "",
             TwoFactorEnabled = user.TwoFactorEnabled,
         });
     }
@@ -52,7 +52,7 @@ public class UserManagementService
         {
             Id = user.Id,
             Email = user.Email ?? "",
-            UserName = user.UserName ?? "",
+            Username = user.UserName ?? "",
             TwoFactorEnabled = user.TwoFactorEnabled,
         });
     }
@@ -87,7 +87,7 @@ public class UserManagementService
             {
                 Id = x.Id,
                 Email = x.Email ?? "",
-                UserName = x.UserName ?? "",
+                Username = x.UserName ?? "",
                 TwoFactorEnabled = x.TwoFactorEnabled,
             })
             .ToListAsync();
@@ -126,7 +126,7 @@ public class UserManagementService
         {
             Id = user.Id,
             Email = user.Email ?? "",
-            UserName = user.UserName ?? "",
+            Username = user.UserName ?? "",
             TwoFactorEnabled = user.TwoFactorEnabled,
         });
     }
@@ -167,7 +167,7 @@ public class UserManagementService
         {
             Id = user.Id,
             Email = user.Email ?? "",
-            UserName = user.UserName ?? "",
+            Username = user.UserName ?? "",
             TwoFactorEnabled = user.TwoFactorEnabled,
         });
     }
@@ -203,7 +203,7 @@ public class UserManagementService
         {
             Id = user.Id,
             Email = user.Email ?? "",
-            UserName = user.UserName ?? "",
+            Username = user.UserName ?? "",
             TwoFactorEnabled = user.TwoFactorEnabled,
         });
     }
