@@ -1,5 +1,9 @@
 <script setup lang="ts">
+import ConfirmDialog from '@/components/Common/Dialogs/ConfirmDialog.vue'
 import { UsersClient, TwoFactorStatusDto } from '@/resources/api-clients/identity-api-client'
+import { useDialog } from 'primevue'
+
+const dialog = useDialog()
 
 interface Emits {
   (e: 'enable2fa'): void
@@ -35,22 +39,81 @@ const handleEnable2fa = () => {
 }
 
 const handleGenerateRecoveryCodes = () => {
-  emit('generate-codes')
+  dialog.open(ConfirmDialog, {
+    data: {
+      title: 'Regenerate Recovery Codes',
+      message: 'Are you sure you want to regenerate your recovery codes? This will invalidate your existing recovery codes.',
+      confirm: {
+        text: 'Yes, Regenerate',
+        severity: 'warn'
+      },
+      cancel: {
+        text: 'Cancel',
+        severity: 'secondary'
+      },
+    },
+    props: {
+      style: {
+        maxWidth: "40rem",
+        width: "100%",
+        // width: "50vw",
+      },
+      modal: true,
+      closable: false,
+      dismissableMask: false,
+      closeOnEscape: false,
+      showHeader: false,
+    },
+    onClose: (opt) => {
+      if (opt?.data) {
+        emit('generate-codes')
+      }
+    }
+  });
+
 }
 
 const handleDisable2fa = async () => {
-  if (!confirm('Are you sure you want to disable two-factor authentication?')) return
-
   isDisabling2fa.value = true
-  try {
-    await usersClient.disable2fa()
-    await loadTwoFactorStatus()
-    emit('disable2fa')
-  } catch (error) {
-    console.error('Failed to disable 2FA:', error)
-  } finally {
-    isDisabling2fa.value = false
-  }
+  dialog.open(ConfirmDialog, {
+    data: {
+      title: 'Disable Two-Factor Authentication',
+      message: 'Are you sure you want to disable two-factor authentication? This will reduce the security of your account.',
+      confirm: {
+        text: 'Yes, Disable',
+        severity: 'danger'
+      },
+      cancel: {
+        text: 'Cancel',
+        severity: 'secondary'
+      },
+    },
+    props: {
+      style: {
+        maxWidth: "40rem",
+        width: "100%",
+        // width: "50vw",
+      },
+      modal: true,
+      closable: false,
+      dismissableMask: false,
+      closeOnEscape: false,
+      showHeader: false,
+    },
+    onClose: async (opt) => {
+      try {
+        if (!opt?.data)
+          return
+        await usersClient.disable2fa()
+        await loadTwoFactorStatus()
+        emit('disable2fa')
+      } catch (error) {
+        console.error('Failed to disable 2FA:', error)
+      } finally {
+        isDisabling2fa.value = false
+      }
+    }
+  });
 }
 
 const refresh2faStatus = async () => {

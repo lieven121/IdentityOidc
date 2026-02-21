@@ -6,6 +6,7 @@
     position="bottom-right"
     group="notifications"
   />
+  <DynamicDialog />
 </template>
 
 <style lang="scss">
