@@ -69,6 +69,10 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
+  if (window.location.hostname === 'localhost' && window.location.port === '5173') {
+    window.location.href = 'https://localhost:7038' + to.fullPath
+    return
+  }
   const userStore = useUserStore()
   await userStore.loadUser()
   if (to.meta.requiresAdmin && !userStore.isAdmin) {
