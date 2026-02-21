@@ -47,7 +47,7 @@ const showMobileMenu = computed({
       router.replace({ query: { ...route.query, show: undefined } })
       return
     }
-    router.replace({ query: { ...route.query, show: !newValue ? 'true' : undefined } })
+    router.replace({ query: { ...route.query, show: !newValue ? 'true' : undefined }, force: true })
   }
 })
 
@@ -55,13 +55,22 @@ const checkMobile = () => {
   isMobile.value = window.innerWidth < 768
 }
 
+const handlePopState = () => {
+  // When user navigates back on mobile, show the menu
+  if (isMobile.value && !showMobileMenu.value) {
+    showMobileMenu.value = true
+  }
+}
+
 onMounted(() => {
   checkMobile()
   window.addEventListener('resize', checkMobile)
+  window.addEventListener('popstate', handlePopState)
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkMobile)
+  window.removeEventListener('popstate', handlePopState)
 })
 
 const handleMenuItemClick = async (item: MenuItem) => {
