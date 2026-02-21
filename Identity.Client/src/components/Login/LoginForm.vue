@@ -258,7 +258,7 @@ onMounted(() => {
               <InputOtp
                 :length="6"
                 :invalid="otpError"
-                aria-autocomplete="otp"
+                aria-autocomplete="one-time-code"
                 v-model="otp"
                 id="OtpInput"
               ></InputOtp>
