@@ -64,9 +64,9 @@ onUnmounted(() => {
   window.removeEventListener('resize', checkMobile)
 })
 
-const handleMenuItemClick = (item: MenuItem) => {
+const handleMenuItemClick = async (item: MenuItem) => {
   // Navigate to the route
-  router.push({ name: item.routeName })
+  await router.push({ name: item.routeName })
 
   // On mobile, hide menu after navigation to show content
   if (isMobile.value) {
