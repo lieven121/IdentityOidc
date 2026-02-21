@@ -2829,7 +2829,7 @@ function throwException(message: string, status: number, response: string, heade
         throw new ApiException(message, status, response, headers, null);
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 /*
 // i mport { useAlertStore } from '@/stores/alert';
