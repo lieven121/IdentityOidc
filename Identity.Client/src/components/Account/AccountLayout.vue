@@ -97,8 +97,14 @@ watch(() => route.name, () => {
 
 <template>
   <div class="account-layout">
-    <div class="background"></div>
-    <div class="layout-container">
+    <div
+      class="background"
+      id="AccountBackground"
+    ></div>
+    <div
+      class="layout-container"
+      id="AccountLayoutContainer"
+    >
       <!-- Mobile: Show either menu or content -->
       <template v-if="isMobile">
         <!-- Mobile Menu List -->

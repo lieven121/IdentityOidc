@@ -209,8 +209,14 @@ onMounted(() => {
     :class="position"
   >
 
-    <div class="login-background"></div>
-    <div class="login-wrapper">
+    <div
+      class="login-background"
+      id="LoginBackground"
+    ></div>
+    <div
+      class="login-wrapper"
+      id="LoginWrapper"
+    >
       <Card class="login-card">
         <template #content>
           <div class="logo-wrapper"><img

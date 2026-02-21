@@ -1,0 +1,13 @@
+/* 
+  Default Custom CSS
+  This file serves as the default styling for the application.
+  It can be overridden by a custom CSS file loaded from the API at runtime.
+*/
+
+:root {
+  /* Add your default CSS custom properties here */
+  /* --primary-color: #3b82f6; */
+  /* --secondary-color: #10b981; */
+}
+
+/* Add your default styles here */
