@@ -90,7 +90,7 @@ defineExpose({
       >
         <div class="status-info">
           <i class="fa-duotone fa-circle-exclamation status-icon warning"></i>
-          <div>
+          <div class="status-text">
             <h4>Not Enabled</h4>
             <p>Two-factor authentication is currently disabled for your account.</p>
           </div>
@@ -111,7 +111,7 @@ defineExpose({
       >
         <div class="status-info">
           <i class="fa-duotone fa-circle-check status-icon success"></i>
-          <div>
+          <div class="status-text">
             <h4>Enabled</h4>
             <p>Two-factor authentication is active on your account.</p>
           </div>
@@ -139,48 +139,21 @@ defineExpose({
 </template>
 
 <style lang="scss" scoped>
-.security-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.section-details {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding-bottom: 0.5rem;
-}
-
-.section-description {
-  margin: 0;
-  color: var(--text-color-secondary);
-  font-size: 0.9rem;
-}
-
-.subsection-header {
-  .subsection-title {
-    i {
-      color: var(--primary-color);
-    }
-  }
-}
+@use '../account-shared.scss' as *;
 
 .two-factor-status {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 1.5rem;
-  border: 1px solid var(--surface-border);
-  border-radius: var(--border-radius);
   gap: 1rem;
 
   &.enabled {
-    border-color: var(--green-200);
     background-color: rgba(34, 197, 94, 0.05);
   }
 
-  .status-info {
+
+  .status-text {
     h4 {
       margin: 0 0 0.25rem 0;
       font-size: 1.1rem;
@@ -188,40 +161,15 @@ defineExpose({
 
     p {
       margin: 0;
-      color: var(--text-color-secondary);
+      color: var(--p-surface-600);
       font-size: 0.9rem;
     }
   }
 
+
   .two-factor-actions {
     display: flex;
     gap: 0.5rem;
-  }
-}
-
-.status-icon {
-  font-size: 1.5rem;
-  margin-right: 0.5rem;
-
-  &.warning {
-    color: var(--orange-500);
-  }
-
-  &.success {
-    color: var(--green-500);
-  }
-}
-
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  padding: 2rem;
-
-  p {
-    margin: 0;
-    color: var(--text-color-secondary);
   }
 }
 

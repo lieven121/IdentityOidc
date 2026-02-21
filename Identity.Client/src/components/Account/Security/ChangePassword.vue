@@ -139,7 +139,7 @@ const handleChangePassword = async () => {
           />
         </div>
 
-        <div class="actions no-border">
+        <div class="actions align-right">
           <Button
             type="submit"
             label="Update Password"

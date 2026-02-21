@@ -64,5 +64,20 @@ watch(copied, (newValue) => {
 <style lang="scss" scoped>
 .copy-field {
   --label-margin-bottom: 0rem;
+
+  .value-with-copy {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    code {
+      flex: 1;
+      background: var(--surface-100);
+      padding: 0.5rem;
+      border-radius: var(--border-radius);
+      font-size: 0.85rem;
+      font-family: monospace;
+    }
+  }
 }
 </style>

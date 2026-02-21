@@ -369,23 +369,37 @@ watch(() => route.name, () => {
       align-items: center;
       gap: 1rem;
       padding: 0.875rem 1rem;
-      border-radius: var(--border-radius);
+      border-radius: var(--border-radius, 4px);
       text-decoration: none;
-      color: var(--text-color);
       transition: all 0.2s;
+      --text: var(--p-card-color);
+      --icon-color: var(--accent-color);
+      --background-color: transparent;
+      color: var(--text);
+      background: var(--background-color);
 
-      &:hover {
-        background: var(--surface-hover);
-      }
+
+
+
 
       &.active {
-        background: var(--primary-color);
-        color: var(--primary-color-text);
+        --background-color: var(--accent-color);
+        --text: var(--accent-inverse-color);
+        --icon-color: var(--accent-inverse-color);
+
+      }
+
+      &:hover {
+        --background-color: var(--accent-sub-color);
+        --text: var(--accent-inverse-color);
+        --icon-color: var(--accent-inverse-color);
+
       }
 
       i {
         font-size: 1.25rem;
         width: 1.5rem;
+        color: var(--icon-color);
       }
 
       span {
@@ -393,9 +407,7 @@ watch(() => route.name, () => {
       }
 
       &.admin-item:not(.active) {
-        i {
-          color: var(--orange-500);
-        }
+        i {}
       }
     }
   }

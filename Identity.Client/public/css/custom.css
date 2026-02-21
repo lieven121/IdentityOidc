@@ -8,6 +8,12 @@
   /* Add your default CSS custom properties here */
   /* --primary-color: #3b82f6; */
   /* --secondary-color: #10b981; */
+
+  --accent-color: #a47357; /* Default accent color */
+  --accent-sub-color: #583e2f; /* Default accent sub color */
+  --accent-inverse-color: #ffffff; /* Default accent inverse color */
+
+  --border-radius: 4px;
 }
 
 /* Add your default styles here */

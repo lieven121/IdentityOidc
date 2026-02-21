@@ -72,7 +72,7 @@ const handleUpdate = async () => {
           <!-- Joined date field removed as it's not available in UserDto -->
         </div>
 
-        <div class="actions">
+        <div class="actions align-right">
           <Button
             label="Save Changes"
             icon="fa-duotone fa-check"

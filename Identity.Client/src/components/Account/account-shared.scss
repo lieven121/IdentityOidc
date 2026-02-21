@@ -24,7 +24,7 @@
 
   i {
     font-size: 1.5rem;
-    color: var(--primary-color);
+    color: var(--accent-color);
   }
 
   h1,
@@ -47,7 +47,7 @@
 
 .section-description {
   margin: 0;
-  color: var(--p-text-muted-color);
+  color: var(--p-slate-500);
   font-size: 0.9rem;
 }
 
@@ -106,20 +106,12 @@
   gap: 1.5rem;
 }
 
-// Action Buttons Container
 .actions {
   display: flex;
   gap: 0.75rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--surface-border);
-
-  &.no-border {
-    border-top: none;
-    padding-top: 0;
-  }
-
-  &.space-between {
-    justify-content: space-between;
+  padding-top: 0;
+  &.align-right {
+    justify-content: flex-end;
   }
 }
 
@@ -138,7 +130,7 @@
   padding: 3rem;
 
   p {
-    color: var(--text-color-secondary);
+    color: var(--p-slate-500);
   }
 }
 
@@ -150,7 +142,7 @@
   justify-content: center;
   gap: 1rem;
   padding: 3rem;
-  color: var(--text-color-secondary);
+  color: var(--p-slate-500);
 
   i {
     font-size: 3rem;
@@ -170,7 +162,7 @@
   label {
     font-weight: 600;
     font-size: 0.9rem;
-    color: var(--text-color-secondary);
+    color: var(--p-slate-500);
   }
 }
 
@@ -181,7 +173,7 @@
 
   label {
     font-weight: 600;
-    color: var(--text-color-secondary);
+    color: var(--p-slate-500);
     font-size: 0.9rem;
   }
 
@@ -190,23 +182,6 @@
   }
 }
 
-// Value with Copy Button
-.value-with-copy {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-
-  code {
-    flex: 1;
-    background: var(--surface-100);
-    padding: 0.5rem;
-    border-radius: var(--border-radius);
-    font-size: 0.85rem;
-    font-family: monospace;
-  }
-}
-
-// Status Info Layout
 .status-info {
   display: flex;
   align-items: center;
@@ -217,15 +192,15 @@
     font-size: 2rem;
 
     &.warning {
-      color: var(--orange-500);
+      color: var(--p-orange-500);
     }
 
     &.success {
-      color: var(--green-500);
+      color: var(--p-green-500);
     }
 
     &.danger {
-      color: var(--red-500);
+      color: var(--p-red-500);
     }
   }
 
@@ -236,44 +211,8 @@
 
   p {
     margin: 0.25rem 0 0 0;
-    color: var(--text-color-secondary);
+    color: var(--p-slate-500);
     font-size: 0.9rem;
-  }
-}
-
-// Stats Grid
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-
-  .stat-item {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-    background: var(--surface-50);
-    border-radius: var(--border-radius);
-
-    i {
-      font-size: 2rem;
-      color: var(--primary-color);
-    }
-
-    div {
-      display: flex;
-      flex-direction: column;
-
-      .stat-value {
-        font-size: 1.5rem;
-        font-weight: 600;
-      }
-
-      .stat-label {
-        font-size: 0.85rem;
-        color: var(--text-color-secondary);
-      }
-    }
   }
 }
 
@@ -328,10 +267,6 @@
     h1 {
       font-size: 1.5rem;
     }
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr;
   }
 
   .actions {
