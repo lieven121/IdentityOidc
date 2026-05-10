@@ -64,6 +64,8 @@ public class OpenIddictWorker(IServiceProvider serviceProvider, IConfiguration c
                 if(applicationConfig.PKCE)
                 {
                     app.Requirements.Add(Requirements.Features.ProofKeyForCodeExchange);
+                } else {
+                    app.Requirements.Remove(Requirements.Features.ProofKeyForCodeExchange);
                 }
                 if(applicationConfig.RedirectUri != null)
                     foreach (var uri in applicationConfig.RedirectUri)
