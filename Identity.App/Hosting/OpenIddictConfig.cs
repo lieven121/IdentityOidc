@@ -69,7 +69,7 @@ public static class OpenIddictConfig
                 options.AllowAuthorizationCodeFlow();
                 options.AllowRefreshTokenFlow();
                 //PKCE
-                options.RequireProofKeyForCodeExchange();
+                //options.RequireProofKeyForCodeExchange();
 
 
                 // Register the signing and encryption credentials.
