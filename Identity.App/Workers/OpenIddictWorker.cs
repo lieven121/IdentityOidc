@@ -4,6 +4,7 @@ using Identity.App.Data;
 using Identity.App.Helpers;
 using Identity.App.Models;
 using Identity.App.Models.Consts;
+using Identity.App.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
@@ -34,8 +35,7 @@ public class OpenIddictWorker(
 
     private async Task CreateRolesAsync(IServiceScope scope, CancellationToken cancellationToken)
     {
-        var roles = configuration.GetSection("OpenIddict:Roles").Get<IEnumerable<string>>() 
-                    ?? new[] { Roles.Admin, Roles.User };
+        var roles = scope.ServiceProvider.GetRequiredService<ConfigEntries>().RoleNames;
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
         foreach (var roleName in roles)
@@ -73,41 +73,10 @@ public class OpenIddictWorker(
                 await manager.DeleteAsync(client);
             }
 
-            var app = new OpenIddictApplicationDescriptor
-            {
-                ClientId = applicationConfig.ClientId,
-                DisplayName = applicationConfig.Name,
-                Permissions =
-                {
-                    Permissions.Endpoints.Authorization,
-                    Permissions.Endpoints.EndSession,
-                    Permissions.Endpoints.Token,
-                    Permissions.GrantTypes.AuthorizationCode,
-                    Permissions.GrantTypes.RefreshToken,
-                    Permissions.ResponseTypes.Code,
-                    Permissions.Scopes.Email,
-                    Permissions.Scopes.Profile,
-                    Permissions.Scopes.Roles,
-                    Permissions.Prefixes.Scope + OpenIddictConstants.Scopes.OpenId,
-                    Permissions.Prefixes.Scope + OpenIddictConstants.Scopes.OfflineAccess,
-                },
-                ClientType = string.IsNullOrWhiteSpace(applicationConfig.ClientSecret) ? ClientTypes.Public : ClientTypes.Confidential,
-                ClientSecret = string.IsNullOrWhiteSpace(applicationConfig.ClientSecret) ? null : applicationConfig.ClientSecret,
-                
-            };
+            var app = ApplicationDescriptorBuilder.Build(applicationConfig);
 
-            // Store required roles in application properties
-            if (applicationConfig.RequiredRoles != null && applicationConfig.RequiredRoles.Any())
+            foreach (var appScope in ApplicationDescriptorBuilder.GetScopes(applicationConfig))
             {
-                app.Properties["RequiredRoles"] = System.Text.Json.JsonSerializer.SerializeToElement(
-                    applicationConfig.RequiredRoles.ToList());
-            }
-
-            var appScopes = applicationConfig.Scope.Split(" ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-            foreach (var appScope in appScopes)
-            {
-                app.Permissions.Add(Permissions.Prefixes.Scope + appScope);
                 if (!scopeDictionary.TryAdd(appScope, new OpenIddictScopeDescriptor
                 {
                     Name = appScope,
@@ -122,46 +91,27 @@ public class OpenIddictWorker(
                 }
             }
 
-            if (app.ClientType == ClientTypes.Confidential)
-            {
-                app.Permissions.Add(Permissions.GrantTypes.ClientCredentials);
-                app.Permissions.Add(Permissions.ResponseTypes.Token);
-                //app.Permissions.Remove(Permissions.GrantTypes.AuthorizationCode);
-            }
-
-            // Public clients can't authenticate at the token endpoint, so PKCE is their only
-            // protection against authorization code interception.
-            if(applicationConfig.PKCE || app.ClientType == ClientTypes.Public)
-            {
-                app.Requirements.Add(Requirements.Features.ProofKeyForCodeExchange);
-            } else {
-                app.Requirements.Remove(Requirements.Features.ProofKeyForCodeExchange);
-            }
-            if(applicationConfig.RedirectUri != null)
-                foreach (var uri in applicationConfig.RedirectUri)
-                {
-                    app.RedirectUris.Add(new Uri(uri));
-                }
-
-            if (applicationConfig.PostLogoutRedirectUri != null)
-                foreach (var uri in applicationConfig.PostLogoutRedirectUri)
-                {
-                    app.PostLogoutRedirectUris.Add(new Uri(uri));
-                }
-
-
             await manager.CreateAsync(app, cancellationToken);
         }
 
 
+        // Merge rather than recreate: applications managed in the admin UI may also be resources
+        // of these scopes, and must keep them across restarts.
+        var configClientIds = new HashSet<string>(applications.Select(a => a.ClientId), StringComparer.OrdinalIgnoreCase);
         foreach (var appScope in scopeDictionary)
         {
-            var s = await scopeManager.FindByNameAsync(appScope.Key);
-            if (s != null)
+            var s = await scopeManager.FindByNameAsync(appScope.Key, cancellationToken);
+            if (s == null)
             {
-                await scopeManager.DeleteAsync(s);
+                await scopeManager.CreateAsync(appScope.Value, cancellationToken);
+                continue;
             }
-            await scopeManager.CreateAsync(appScope.Value);
+
+            var existing = new OpenIddictScopeDescriptor();
+            await scopeManager.PopulateAsync(existing, s, cancellationToken);
+            foreach (var resource in existing.Resources.Where(r => !configClientIds.Contains(r)))
+                appScope.Value.Resources.Add(resource);
+            await scopeManager.UpdateAsync(s, appScope.Value, cancellationToken);
         }
     }
 

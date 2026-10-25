@@ -1065,11 +1065,23 @@ export class AdminClient extends ClientBase {
             });
         } else if (status === 400) {
             return response.text().then((_responseText) => {
-            return throwException("A server side error occurred.", status, _responseText, _headers);
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result400 = resultData400 !== undefined ? resultData400 : null as any;
+    
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
             });
         } else if (status === 404) {
             return response.text().then((_responseText) => {
             return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            let resultData409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result409 = resultData409 !== undefined ? resultData409 : null as any;
+    
+            return throwException("A server side error occurred.", status, _responseText, _headers, result409);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -1111,11 +1123,23 @@ export class AdminClient extends ClientBase {
             });
         } else if (status === 400) {
             return response.text().then((_responseText) => {
-            return throwException("A server side error occurred.", status, _responseText, _headers);
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result400 = resultData400 !== undefined ? resultData400 : null as any;
+    
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
             });
         } else if (status === 404) {
             return response.text().then((_responseText) => {
             return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            let resultData409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result409 = resultData409 !== undefined ? resultData409 : null as any;
+    
+            return throwException("A server side error occurred.", status, _responseText, _headers, result409);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -1157,11 +1181,23 @@ export class AdminClient extends ClientBase {
             });
         } else if (status === 400) {
             return response.text().then((_responseText) => {
-            return throwException("A server side error occurred.", status, _responseText, _headers);
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result400 = resultData400 !== undefined ? resultData400 : null as any;
+    
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
             });
         } else if (status === 404) {
             return response.text().then((_responseText) => {
             return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            let resultData409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result409 = resultData409 !== undefined ? resultData409 : null as any;
+    
+            return throwException("A server side error occurred.", status, _responseText, _headers, result409);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -1203,11 +1239,23 @@ export class AdminClient extends ClientBase {
             });
         } else if (status === 400) {
             return response.text().then((_responseText) => {
-            return throwException("A server side error occurred.", status, _responseText, _headers);
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result400 = resultData400 !== undefined ? resultData400 : null as any;
+    
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
             });
         } else if (status === 404) {
             return response.text().then((_responseText) => {
             return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            let resultData409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result409 = resultData409 !== undefined ? resultData409 : null as any;
+    
+            return throwException("A server side error occurred.", status, _responseText, _headers, result409);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -1217,7 +1265,7 @@ export class AdminClient extends ClientBase {
         return Promise.resolve<void>(null as any);
     }
 
-    admin_GetApplicationsWithRoles(): Promise<ApplicationRoleInfo[] | null> {
+    admin_GetApplications(): Promise<ApplicationDto[] | null> {
         let url_ = this.baseUrl + "/api/Admin/applications";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -1231,11 +1279,11 @@ export class AdminClient extends ClientBase {
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.transformResult(url_, _response, (_response: Response) => this.processAdmin_GetApplicationsWithRoles(_response));
+            return this.transformResult(url_, _response, (_response: Response) => this.processAdmin_GetApplications(_response));
         });
     }
 
-    protected processAdmin_GetApplicationsWithRoles(response: Response): Promise<ApplicationRoleInfo[] | null> {
+    protected processAdmin_GetApplications(response: Response): Promise<ApplicationDto[] | null> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
@@ -1245,7 +1293,7 @@ export class AdminClient extends ClientBase {
             if (Array.isArray(resultData200)) {
                 result200 = [] as any;
                 for (let item of resultData200)
-                    result200!.push(ApplicationRoleInfo.fromJS(item));
+                    result200!.push(ApplicationDto.fromJS(item));
             }
             else {
                 result200 = null as any;
@@ -1257,7 +1305,279 @@ export class AdminClient extends ClientBase {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<ApplicationRoleInfo[] | null>(null as any);
+        return Promise.resolve<ApplicationDto[] | null>(null as any);
+    }
+
+    admin_CreateApplication(application: SaveApplicationDto): Promise<ApplicationSecretDto | null> {
+        let url_ = this.baseUrl + "/api/Admin/applications";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(application);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processAdmin_CreateApplication(_response));
+        });
+    }
+
+    protected processAdmin_CreateApplication(response: Response): Promise<ApplicationSecretDto | null> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = resultData200 ? ApplicationSecretDto.fromJS(resultData200) : null as any;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result400 = resultData400 !== undefined ? resultData400 : null as any;
+    
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            let resultData409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result409 = resultData409 !== undefined ? resultData409 : null as any;
+    
+            return throwException("A server side error occurred.", status, _responseText, _headers, result409);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ApplicationSecretDto | null>(null as any);
+    }
+
+    admin_GetApplication(clientId: string): Promise<ApplicationDto | null> {
+        let url_ = this.baseUrl + "/api/Admin/applications/{clientId}";
+        if (clientId === undefined || clientId === null)
+            throw new globalThis.Error("The parameter 'clientId' must be defined.");
+        url_ = url_.replace("{clientId}", encodeURIComponent("" + clientId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processAdmin_GetApplication(_response));
+        });
+    }
+
+    protected processAdmin_GetApplication(response: Response): Promise<ApplicationDto | null> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = resultData200 ? ApplicationDto.fromJS(resultData200) : null as any;
+            return result200;
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ApplicationDto | null>(null as any);
+    }
+
+    admin_UpdateApplication(clientId: string, application: SaveApplicationDto): Promise<ApplicationSecretDto | null> {
+        let url_ = this.baseUrl + "/api/Admin/applications/{clientId}";
+        if (clientId === undefined || clientId === null)
+            throw new globalThis.Error("The parameter 'clientId' must be defined.");
+        url_ = url_.replace("{clientId}", encodeURIComponent("" + clientId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(application);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processAdmin_UpdateApplication(_response));
+        });
+    }
+
+    protected processAdmin_UpdateApplication(response: Response): Promise<ApplicationSecretDto | null> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = resultData200 ? ApplicationSecretDto.fromJS(resultData200) : null as any;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result400 = resultData400 !== undefined ? resultData400 : null as any;
+    
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            let resultData409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result409 = resultData409 !== undefined ? resultData409 : null as any;
+    
+            return throwException("A server side error occurred.", status, _responseText, _headers, result409);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ApplicationSecretDto | null>(null as any);
+    }
+
+    admin_DeleteApplication(clientId: string): Promise<void> {
+        let url_ = this.baseUrl + "/api/Admin/applications/{clientId}";
+        if (clientId === undefined || clientId === null)
+            throw new globalThis.Error("The parameter 'clientId' must be defined.");
+        url_ = url_.replace("{clientId}", encodeURIComponent("" + clientId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "DELETE",
+            headers: {
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processAdmin_DeleteApplication(_response));
+        });
+    }
+
+    protected processAdmin_DeleteApplication(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            let resultData409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result409 = resultData409 !== undefined ? resultData409 : null as any;
+    
+            return throwException("A server side error occurred.", status, _responseText, _headers, result409);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    admin_SetApplicationSecret(clientId: string, secret: SetClientSecretDto): Promise<ApplicationSecretDto | null> {
+        let url_ = this.baseUrl + "/api/Admin/applications/{clientId}/secret";
+        if (clientId === undefined || clientId === null)
+            throw new globalThis.Error("The parameter 'clientId' must be defined.");
+        url_ = url_.replace("{clientId}", encodeURIComponent("" + clientId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(secret);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processAdmin_SetApplicationSecret(_response));
+        });
+    }
+
+    protected processAdmin_SetApplicationSecret(response: Response): Promise<ApplicationSecretDto | null> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = resultData200 ? ApplicationSecretDto.fromJS(resultData200) : null as any;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result400 = resultData400 !== undefined ? resultData400 : null as any;
+    
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            let resultData409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result409 = resultData409 !== undefined ? resultData409 : null as any;
+    
+            return throwException("A server side error occurred.", status, _responseText, _headers, result409);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ApplicationSecretDto | null>(null as any);
     }
 
     admin_GetApplicationRequiredRoles(clientId: string): Promise<string[] | null> {
@@ -1341,9 +1661,25 @@ export class AdminClient extends ClientBase {
             return response.text().then((_responseText) => {
             return;
             });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result400 = resultData400 !== undefined ? resultData400 : null as any;
+    
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            });
         } else if (status === 404) {
             return response.text().then((_responseText) => {
             return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            let resultData409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result409 = resultData409 !== undefined ? resultData409 : null as any;
+    
+            return throwException("A server side error occurred.", status, _responseText, _headers, result409);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -1351,6 +1687,49 @@ export class AdminClient extends ClientBase {
             });
         }
         return Promise.resolve<void>(null as any);
+    }
+
+    admin_GetScopes(): Promise<string[] | null> {
+        let url_ = this.baseUrl + "/api/Admin/scopes";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processAdmin_GetScopes(_response));
+        });
+    }
+
+    protected processAdmin_GetScopes(response: Response): Promise<string[] | null> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(item);
+            }
+            else {
+                result200 = null as any;
+            }
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<string[] | null>(null as any);
     }
 
     admin_GetAllRoles(): Promise<RoleInfo[] | null> {
@@ -1394,6 +1773,222 @@ export class AdminClient extends ClientBase {
             });
         }
         return Promise.resolve<RoleInfo[] | null>(null as any);
+    }
+
+    admin_CreateRole(role: RoleNameDto): Promise<RoleInfo | null> {
+        let url_ = this.baseUrl + "/api/Admin/roles";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(role);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processAdmin_CreateRole(_response));
+        });
+    }
+
+    protected processAdmin_CreateRole(response: Response): Promise<RoleInfo | null> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = resultData200 ? RoleInfo.fromJS(resultData200) : null as any;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result400 = resultData400 !== undefined ? resultData400 : null as any;
+    
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            let resultData409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result409 = resultData409 !== undefined ? resultData409 : null as any;
+    
+            return throwException("A server side error occurred.", status, _responseText, _headers, result409);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<RoleInfo | null>(null as any);
+    }
+
+    admin_RenameRole(name: string, role: RoleNameDto): Promise<RoleInfo | null> {
+        let url_ = this.baseUrl + "/api/Admin/roles/{name}";
+        if (name === undefined || name === null)
+            throw new globalThis.Error("The parameter 'name' must be defined.");
+        url_ = url_.replace("{name}", encodeURIComponent("" + name));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(role);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processAdmin_RenameRole(_response));
+        });
+    }
+
+    protected processAdmin_RenameRole(response: Response): Promise<RoleInfo | null> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = resultData200 ? RoleInfo.fromJS(resultData200) : null as any;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result400 = resultData400 !== undefined ? resultData400 : null as any;
+    
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            let resultData409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result409 = resultData409 !== undefined ? resultData409 : null as any;
+    
+            return throwException("A server side error occurred.", status, _responseText, _headers, result409);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<RoleInfo | null>(null as any);
+    }
+
+    admin_DeleteRole(name: string): Promise<void> {
+        let url_ = this.baseUrl + "/api/Admin/roles/{name}";
+        if (name === undefined || name === null)
+            throw new globalThis.Error("The parameter 'name' must be defined.");
+        url_ = url_.replace("{name}", encodeURIComponent("" + name));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "DELETE",
+            headers: {
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processAdmin_DeleteRole(_response));
+        });
+    }
+
+    protected processAdmin_DeleteRole(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status === 409) {
+            return response.text().then((_responseText) => {
+            let result409: any = null;
+            let resultData409 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result409 = resultData409 !== undefined ? resultData409 : null as any;
+    
+            return throwException("A server side error occurred.", status, _responseText, _headers, result409);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    admin_GetRoleMembers(name: string): Promise<RoleMemberDto[] | null> {
+        let url_ = this.baseUrl + "/api/Admin/roles/{name}/users";
+        if (name === undefined || name === null)
+            throw new globalThis.Error("The parameter 'name' must be defined.");
+        url_ = url_.replace("{name}", encodeURIComponent("" + name));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processAdmin_GetRoleMembers(_response));
+        });
+    }
+
+    protected processAdmin_GetRoleMembers(response: Response): Promise<RoleMemberDto[] | null> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(RoleMemberDto.fromJS(item));
+            }
+            else {
+                result200 = null as any;
+            }
+            return result200;
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<RoleMemberDto[] | null>(null as any);
     }
 
     admin_ResetUser2faById(userId: string): Promise<void> {
@@ -2960,12 +3555,18 @@ export interface IResetPasswordDto {
     newPassword?: string | undefined;
 }
 
-export class ApplicationRoleInfo implements IApplicationRoleInfo {
-    clientId?: string;
-    displayName?: string;
+export class ApplicationDto implements IApplicationDto {
+    clientId!: string;
+    displayName?: string | undefined;
+    clientType!: string;
+    pkce?: boolean;
+    redirectUris?: string[];
+    postLogoutRedirectUris?: string[];
+    scopes?: string[];
     requiredRoles?: string[];
+    isConfigManaged?: boolean;
 
-    constructor(data?: IApplicationRoleInfo) {
+    constructor(data?: IApplicationDto) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -2978,17 +3579,35 @@ export class ApplicationRoleInfo implements IApplicationRoleInfo {
         if (_data) {
             this.clientId = _data["clientId"];
             this.displayName = _data["displayName"];
+            this.clientType = _data["clientType"];
+            this.pkce = _data["pkce"];
+            if (Array.isArray(_data["redirectUris"])) {
+                this.redirectUris = [] as any;
+                for (let item of _data["redirectUris"])
+                    this.redirectUris!.push(item);
+            }
+            if (Array.isArray(_data["postLogoutRedirectUris"])) {
+                this.postLogoutRedirectUris = [] as any;
+                for (let item of _data["postLogoutRedirectUris"])
+                    this.postLogoutRedirectUris!.push(item);
+            }
+            if (Array.isArray(_data["scopes"])) {
+                this.scopes = [] as any;
+                for (let item of _data["scopes"])
+                    this.scopes!.push(item);
+            }
             if (Array.isArray(_data["requiredRoles"])) {
                 this.requiredRoles = [] as any;
                 for (let item of _data["requiredRoles"])
                     this.requiredRoles!.push(item);
             }
+            this.isConfigManaged = _data["isConfigManaged"];
         }
     }
 
-    static fromJS(data: any): ApplicationRoleInfo {
+    static fromJS(data: any): ApplicationDto {
         data = typeof data === 'object' ? data : {};
-        let result = new ApplicationRoleInfo();
+        let result = new ApplicationDto();
         result.init(data);
         return result;
     }
@@ -2997,6 +3616,161 @@ export class ApplicationRoleInfo implements IApplicationRoleInfo {
         data = typeof data === 'object' ? data : {};
         data["clientId"] = this.clientId;
         data["displayName"] = this.displayName;
+        data["clientType"] = this.clientType;
+        data["pkce"] = this.pkce;
+        if (Array.isArray(this.redirectUris)) {
+            data["redirectUris"] = [];
+            for (let item of this.redirectUris)
+                data["redirectUris"].push(item);
+        }
+        if (Array.isArray(this.postLogoutRedirectUris)) {
+            data["postLogoutRedirectUris"] = [];
+            for (let item of this.postLogoutRedirectUris)
+                data["postLogoutRedirectUris"].push(item);
+        }
+        if (Array.isArray(this.scopes)) {
+            data["scopes"] = [];
+            for (let item of this.scopes)
+                data["scopes"].push(item);
+        }
+        if (Array.isArray(this.requiredRoles)) {
+            data["requiredRoles"] = [];
+            for (let item of this.requiredRoles)
+                data["requiredRoles"].push(item);
+        }
+        data["isConfigManaged"] = this.isConfigManaged;
+        return data;
+    }
+}
+
+export interface IApplicationDto {
+    clientId: string;
+    displayName?: string | undefined;
+    clientType: string;
+    pkce?: boolean;
+    redirectUris?: string[];
+    postLogoutRedirectUris?: string[];
+    scopes?: string[];
+    requiredRoles?: string[];
+    isConfigManaged?: boolean;
+}
+
+export class ApplicationSecretDto implements IApplicationSecretDto {
+    clientId!: string;
+    clientSecret?: string | undefined;
+
+    constructor(data?: IApplicationSecretDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.clientId = _data["clientId"];
+            this.clientSecret = _data["clientSecret"];
+        }
+    }
+
+    static fromJS(data: any): ApplicationSecretDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new ApplicationSecretDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["clientId"] = this.clientId;
+        data["clientSecret"] = this.clientSecret;
+        return data;
+    }
+}
+
+export interface IApplicationSecretDto {
+    clientId: string;
+    clientSecret?: string | undefined;
+}
+
+export class SaveApplicationDto implements ISaveApplicationDto {
+    clientId?: string | undefined;
+    displayName!: string;
+    clientType!: string;
+    pkce?: boolean;
+    redirectUris?: string[];
+    postLogoutRedirectUris?: string[];
+    scopes?: string[];
+    requiredRoles?: string[];
+
+    constructor(data?: ISaveApplicationDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.clientId = _data["clientId"];
+            this.displayName = _data["displayName"];
+            this.clientType = _data["clientType"];
+            this.pkce = _data["pkce"];
+            if (Array.isArray(_data["redirectUris"])) {
+                this.redirectUris = [] as any;
+                for (let item of _data["redirectUris"])
+                    this.redirectUris!.push(item);
+            }
+            if (Array.isArray(_data["postLogoutRedirectUris"])) {
+                this.postLogoutRedirectUris = [] as any;
+                for (let item of _data["postLogoutRedirectUris"])
+                    this.postLogoutRedirectUris!.push(item);
+            }
+            if (Array.isArray(_data["scopes"])) {
+                this.scopes = [] as any;
+                for (let item of _data["scopes"])
+                    this.scopes!.push(item);
+            }
+            if (Array.isArray(_data["requiredRoles"])) {
+                this.requiredRoles = [] as any;
+                for (let item of _data["requiredRoles"])
+                    this.requiredRoles!.push(item);
+            }
+        }
+    }
+
+    static fromJS(data: any): SaveApplicationDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new SaveApplicationDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["clientId"] = this.clientId;
+        data["displayName"] = this.displayName;
+        data["clientType"] = this.clientType;
+        data["pkce"] = this.pkce;
+        if (Array.isArray(this.redirectUris)) {
+            data["redirectUris"] = [];
+            for (let item of this.redirectUris)
+                data["redirectUris"].push(item);
+        }
+        if (Array.isArray(this.postLogoutRedirectUris)) {
+            data["postLogoutRedirectUris"] = [];
+            for (let item of this.postLogoutRedirectUris)
+                data["postLogoutRedirectUris"].push(item);
+        }
+        if (Array.isArray(this.scopes)) {
+            data["scopes"] = [];
+            for (let item of this.scopes)
+                data["scopes"].push(item);
+        }
         if (Array.isArray(this.requiredRoles)) {
             data["requiredRoles"] = [];
             for (let item of this.requiredRoles)
@@ -3006,15 +3780,58 @@ export class ApplicationRoleInfo implements IApplicationRoleInfo {
     }
 }
 
-export interface IApplicationRoleInfo {
-    clientId?: string;
-    displayName?: string;
+export interface ISaveApplicationDto {
+    clientId?: string | undefined;
+    displayName: string;
+    clientType: string;
+    pkce?: boolean;
+    redirectUris?: string[];
+    postLogoutRedirectUris?: string[];
+    scopes?: string[];
     requiredRoles?: string[];
 }
 
+export class SetClientSecretDto implements ISetClientSecretDto {
+    clientSecret?: string | undefined;
+
+    constructor(data?: ISetClientSecretDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.clientSecret = _data["clientSecret"];
+        }
+    }
+
+    static fromJS(data: any): SetClientSecretDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new SetClientSecretDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["clientSecret"] = this.clientSecret;
+        return data;
+    }
+}
+
+export interface ISetClientSecretDto {
+    clientSecret?: string | undefined;
+}
+
 export class RoleInfo implements IRoleInfo {
-    id?: string;
-    name?: string;
+    id!: string;
+    name!: string;
+    userCount?: number;
+    isConfigManaged?: boolean;
 
     constructor(data?: IRoleInfo) {
         if (data) {
@@ -3029,6 +3846,8 @@ export class RoleInfo implements IRoleInfo {
         if (_data) {
             this.id = _data["id"];
             this.name = _data["name"];
+            this.userCount = _data["userCount"];
+            this.isConfigManaged = _data["isConfigManaged"];
         }
     }
 
@@ -3043,13 +3862,101 @@ export class RoleInfo implements IRoleInfo {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
         data["name"] = this.name;
+        data["userCount"] = this.userCount;
+        data["isConfigManaged"] = this.isConfigManaged;
         return data;
     }
 }
 
 export interface IRoleInfo {
-    id?: string;
-    name?: string;
+    id: string;
+    name: string;
+    userCount?: number;
+    isConfigManaged?: boolean;
+}
+
+export class RoleNameDto implements IRoleNameDto {
+    name!: string;
+
+    constructor(data?: IRoleNameDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+        }
+    }
+
+    static fromJS(data: any): RoleNameDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new RoleNameDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        return data;
+    }
+}
+
+export interface IRoleNameDto {
+    name: string;
+}
+
+export class RoleMemberDto implements IRoleMemberDto {
+    id!: string;
+    username?: string | undefined;
+    email?: string | undefined;
+    isConfigManaged?: boolean;
+
+    constructor(data?: IRoleMemberDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.username = _data["username"];
+            this.email = _data["email"];
+            this.isConfigManaged = _data["isConfigManaged"];
+        }
+    }
+
+    static fromJS(data: any): RoleMemberDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new RoleMemberDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["username"] = this.username;
+        data["email"] = this.email;
+        data["isConfigManaged"] = this.isConfigManaged;
+        return data;
+    }
+}
+
+export interface IRoleMemberDto {
+    id: string;
+    username?: string | undefined;
+    email?: string | undefined;
+    isConfigManaged?: boolean;
 }
 
 export class LoginRequest implements ILoginRequest {

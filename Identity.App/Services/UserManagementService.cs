@@ -2,6 +2,7 @@ using Identity.App.Data;
 using Identity.App.EndPoints.External.Models;
 using Identity.App.Helpers;
 using Identity.App.Models;
+using Identity.App.Models.Consts;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -15,17 +16,23 @@ public class UserManagementService
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly SecurityAudit _audit;
+    private readonly ConfigEntries _configEntries;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<UserManagementService> _logger;
 
     public UserManagementService(
         UserManager<ApplicationUser> userManager,
         RoleManager<IdentityRole> roleManager,
         SecurityAudit audit,
+        ConfigEntries configEntries,
+        IHttpContextAccessor httpContextAccessor,
         ILogger<UserManagementService> logger)
     {
         _userManager = userManager;
         _roleManager = roleManager;
         _audit = audit;
+        _configEntries = configEntries;
+        _httpContextAccessor = httpContextAccessor;
         _logger = logger;
     }
 
@@ -235,42 +242,43 @@ public class UserManagementService
         });
     }
 
-    public async Task<bool> AddUserToRoleByIdAsync(string userId, string roleName)
-        => await AddUserToRoleAsync(await _userManager.FindByIdAsync(userId), roleName);
+    public async Task<RoleMembershipResult> AddUserToRoleByIdAsync(string userId, string roleName)
+        => await ChangeRoleMembershipAsync(await _userManager.FindByIdAsync(userId), roleName, add: true);
 
-    public async Task<bool> AddUserToRoleByEmailAsync(string email, string roleName)
-        => await AddUserToRoleAsync(await _userManager.FindByEmailAsync(email), roleName);
+    public async Task<RoleMembershipResult> AddUserToRoleByEmailAsync(string email, string roleName)
+        => await ChangeRoleMembershipAsync(await _userManager.FindByEmailAsync(email), roleName, add: true);
 
-    public async Task<bool> RemoveUserFromRoleByIdAsync(string userId, string roleName)
-        => await RemoveUserFromRoleAsync(await _userManager.FindByIdAsync(userId), roleName);
+    public async Task<RoleMembershipResult> RemoveUserFromRoleByIdAsync(string userId, string roleName)
+        => await ChangeRoleMembershipAsync(await _userManager.FindByIdAsync(userId), roleName, add: false);
 
-    public async Task<bool> RemoveUserFromRoleByEmailAsync(string email, string roleName)
-        => await RemoveUserFromRoleAsync(await _userManager.FindByEmailAsync(email), roleName);
+    public async Task<RoleMembershipResult> RemoveUserFromRoleByEmailAsync(string email, string roleName)
+        => await ChangeRoleMembershipAsync(await _userManager.FindByEmailAsync(email), roleName, add: false);
 
-    private async Task<bool> AddUserToRoleAsync(ApplicationUser? user, string roleName)
+    private async Task<RoleMembershipResult> ChangeRoleMembershipAsync(ApplicationUser? user, string roleName, bool add)
     {
-        if (user == null) return false;
+        if (user == null) return RoleMembershipResult.UserNotFound;
 
-        await EnsureRoleExistsAsync(roleName);
+        // Roles are managed explicitly; an unknown name is a mistake, not a request to create one.
+        var role = await _roleManager.FindByNameAsync(roleName);
+        if (role?.Name == null) return RoleMembershipResult.RoleNotFound;
 
-        if (await _userManager.IsInRoleAsync(user, roleName))
-            return true;
+        if (await _userManager.IsInRoleAsync(user, role.Name) == add)
+            return RoleMembershipResult.Ok;
 
-        var result = await _userManager.AddToRoleAsync(user, roleName);
-        _audit.Log(SecurityEvent.RoleAdded, success: result.Succeeded, userId: user.Id, detail: $"role '{roleName}'");
-        return result.Succeeded;
-    }
+        // The startup worker re-syncs configured users' roles, so a change here would be reverted.
+        if (_configEntries.IsConfigUser(user.Email))
+            return RoleMembershipResult.ConfigManaged;
 
-    private async Task<bool> RemoveUserFromRoleAsync(ApplicationUser? user, string roleName)
-    {
-        if (user == null) return false;
+        if (!add && string.Equals(role.Name, Roles.Admin, StringComparison.OrdinalIgnoreCase) &&
+            user.Id == _userManager.GetUserId(_httpContextAccessor.HttpContext?.User ?? new()))
+            return RoleMembershipResult.OwnAdminRole;
 
-        if (!await _userManager.IsInRoleAsync(user, roleName))
-            return true;
-
-        var result = await _userManager.RemoveFromRoleAsync(user, roleName);
-        _audit.Log(SecurityEvent.RoleRemoved, success: result.Succeeded, userId: user.Id, detail: $"role '{roleName}'");
-        return result.Succeeded;
+        var result = add
+            ? await _userManager.AddToRoleAsync(user, role.Name)
+            : await _userManager.RemoveFromRoleAsync(user, role.Name);
+        _audit.Log(add ? SecurityEvent.RoleAdded : SecurityEvent.RoleRemoved, success: result.Succeeded,
+            userId: user.Id, detail: $"role '{role.Name}'");
+        return result.Succeeded ? RoleMembershipResult.Ok : RoleMembershipResult.Failed;
     }
 
     public async Task<IList<string>> GetUserRolesByIdAsync(string userId)
@@ -299,16 +307,6 @@ public class UserManagementService
         var user = await _userManager.FindByEmailAsync(email);
         if (user == null) return false;
         return await _userManager.IsInRoleAsync(user, roleName);
-    }
-
-    private async Task<bool> EnsureRoleExistsAsync(string roleName)
-    {
-        if (!await _roleManager.RoleExistsAsync(roleName))
-        {
-            var result = await _roleManager.CreateAsync(new IdentityRole(roleName));
-            return result.Succeeded;
-        }
-        return true;
     }
 
     // Two-Factor Authentication Methods
@@ -454,4 +452,14 @@ public class UserManagementService
             UrlEncoder.Default.Encode(email),
             unformattedKey);
     }
+}
+
+public enum RoleMembershipResult
+{
+    Ok,
+    UserNotFound,
+    RoleNotFound,
+    ConfigManaged,
+    OwnAdminRole,
+    Failed,
 }

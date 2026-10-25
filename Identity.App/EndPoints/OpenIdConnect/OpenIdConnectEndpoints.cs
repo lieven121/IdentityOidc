@@ -325,17 +325,7 @@ public static class OpenIdConnectEndpoints
         if (application == null)
             return null;
 
-        var properties = await applicationManager.GetPropertiesAsync(application);
-        if (!properties.TryGetValue("RequiredRoles", out var rolesElement) ||
-            rolesElement.ValueKind != System.Text.Json.JsonValueKind.Array)
-            return null;
-
-        var requiredRoles = rolesElement.EnumerateArray()
-            .Where(e => e.ValueKind == System.Text.Json.JsonValueKind.String)
-            .Select(e => e.GetString() ?? "")
-            .Where(s => !string.IsNullOrWhiteSpace(s))
-            .ToList();
-
+        var requiredRoles = await ApplicationDescriptorBuilder.GetRequiredRolesAsync(applicationManager, application);
         if (!requiredRoles.Any())
             return null;
 

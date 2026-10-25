@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { AdminClient, ResultPageOfUserDto, UserDto, UsersFilter, CreateUserDto, ResetPasswordDto } from '@/resources/api-clients/identity-api-client'
+import { apiErrorMessage } from '@/utils/dialogs'
 
 const adminClient = new AdminClient()
 const users = ref<ResultPageOfUserDto | null>(null)
@@ -25,7 +26,11 @@ const resetPasswordForm = ref({
 
 const isCreatingUser = ref(false)
 const isResettingPassword = ref(false)
-// const isUpdatingUserRoles = ref(false)
+const isUpdatingUserRoles = ref(false)
+const allRoles = ref<string[]>([])
+const roleToAdd = ref<string | null>(null)
+const roleError = ref<string | null>(null)
+const assignableRoles = computed(() => allRoles.value.filter(r => !userRoles.value.includes(r)))
 
 const canEdit = true
 
@@ -59,6 +64,13 @@ onMounted(() => {
 
 const viewUser = async (user: UserDto) => {
   selectedUser.value = new UserDto({ ...user })
+  roleToAdd.value = null
+  roleError.value = null
+  try {
+    allRoles.value = ((await adminClient.admin_GetAllRoles()) ?? []).map(r => r.name)
+  } catch (error) {
+    console.error('Failed to load roles:', error)
+  }
   try {
     userRoles.value = (await adminClient.admin_GetUserRolesById(user.id!)) || []
   } catch (error) {
@@ -133,33 +145,39 @@ const handleResetPassword = async () => {
   }
 }
 
-// const addUserToRole = async (roleName: string) => {
-//   if (!selectedUser.value) return
+const addUserToRole = async () => {
+  const roleName = roleToAdd.value
+  if (!selectedUser.value || !roleName) return
 
-//   isUpdatingUserRoles.value = true
-//   try {
-//     await adminClient.admin_AddUserToRoleById(selectedUser.value.id!, roleName)
-//     userRoles.value.push(roleName)
-//   } catch (error) {
-//     console.error('Failed to add role:', error)
-//   } finally {
-//     isUpdatingUserRoles.value = false
-//   }
-// }
+  roleError.value = null
+  isUpdatingUserRoles.value = true
+  try {
+    await adminClient.admin_AddUserToRoleById(selectedUser.value.id!, roleName)
+    userRoles.value = [...userRoles.value, roleName]
+    roleToAdd.value = null
+  } catch (error) {
+    roleError.value = apiErrorMessage(error, 'The role could not be added.')
+    console.error('Failed to add role:', error)
+  } finally {
+    isUpdatingUserRoles.value = false
+  }
+}
 
-// const removeUserFromRole = async (roleName: string) => {
-//   if (!selectedUser.value) return
+const removeUserFromRole = async (roleName: string) => {
+  if (!selectedUser.value) return
 
-//   isUpdatingUserRoles.value = true
-//   try {
-//     await adminClient.admin_RemoveUserFromRoleById(selectedUser.value.id!, roleName)
-//     userRoles.value = userRoles.value.filter(r => r !== roleName)
-//   } catch (error) {
-//     console.error('Failed to remove role:', error)
-//   } finally {
-//     isUpdatingUserRoles.value = false
-//   }
-// }
+  roleError.value = null
+  isUpdatingUserRoles.value = true
+  try {
+    await adminClient.admin_RemoveUserFromRoleById(selectedUser.value.id!, roleName)
+    userRoles.value = userRoles.value.filter(r => r !== roleName)
+  } catch (error) {
+    roleError.value = apiErrorMessage(error, 'The role could not be removed.')
+    console.error('Failed to remove role:', error)
+  } finally {
+    isUpdatingUserRoles.value = false
+  }
+}
 </script>
 
 <template>
@@ -324,12 +342,45 @@ const handleResetPassword = async () => {
 
       <div class="detail-section">
         <h4>Roles</h4>
+        <Message
+          v-if="roleError"
+          severity="error"
+          :closable="false"
+        >
+          {{ roleError }}
+        </Message>
         <div class="tags-section">
-          <Tag
+          <Chip
             v-for="role in userRoles"
             :key="role"
-            :value="role"
-            :closable="canEdit"
+            :label="role"
+            :removable="canEdit && !isUpdatingUserRoles"
+            @remove="removeUserFromRole(role)"
+          />
+          <span
+            v-if="userRoles.length === 0"
+            class="no-roles"
+          >
+            No roles
+          </span>
+        </div>
+        <div
+          v-if="canEdit"
+          class="add-role"
+        >
+          <Select
+            v-model="roleToAdd"
+            :options="assignableRoles"
+            placeholder="Select a role"
+            :disabled="assignableRoles.length === 0"
+          />
+          <Button
+            label="Add role"
+            icon="fa-duotone fa-plus"
+            size="small"
+            :disabled="!roleToAdd"
+            :loading="isUpdatingUserRoles"
+            @click="addUserToRole"
           />
         </div>
       </div>
@@ -530,6 +581,18 @@ const handleResetPassword = async () => {
       span {
         color: var(--text-color);
       }
+    }
+
+    .add-role {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .no-roles {
+      color: var(--p-slate-500);
+      font-size: 0.9rem;
     }
 
     .tags-section {

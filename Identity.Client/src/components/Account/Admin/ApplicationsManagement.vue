@@ -1,27 +1,36 @@
 <script setup lang="ts">
+import ApplicationDialog from '@/components/Account/Admin/ApplicationDialog.vue'
+import ClientSecretDialog from '@/components/Account/Admin/ClientSecretDialog.vue'
 import CopyField from '@/components/Common/CopyField.vue'
-import { AdminClient, ApplicationRoleInfo } from '@/resources/api-clients/identity-api-client'
+import { AdminClient, ApplicationDto, ApplicationSecretDto } from '@/resources/api-clients/identity-api-client'
+import { apiErrorMessage, useConfirmDialog } from '@/utils/dialogs'
 
 const adminClient = new AdminClient()
+const { confirm } = useConfirmDialog()
 
-const applications = ref<ApplicationRoleInfo[]>([])
+const applications = ref<ApplicationDto[]>([])
+const roles = ref<string[]>([])
+const scopes = ref<string[]>([])
 const isLoading = ref(false)
-const selectedApp = ref<ApplicationRoleInfo | null>(null)
-const showAppDialog = ref(false)
-const appRequiredRoles = ref<string[]>([])
-// const isUpdatingRoles = ref(false)
+const errorMessage = ref<string | null>(null)
+const deletingId = ref<string | null>(null)
 
-const canEdit = false
+const selectedApp = ref<ApplicationDto | null>(null)
+const showAppDialog = ref(false)
+const issuedSecret = ref<ApplicationSecretDto | null>(null)
+const showSecretDialog = ref(false)
 
 const loadApplications = async () => {
   isLoading.value = true
   try {
-    const appInfos = await adminClient.admin_GetApplicationsWithRoles()
-    if (appInfos) {
-      applications.value = appInfos.map(app => new ApplicationRoleInfo({
-        ...app,
-      }))
-    }
+    const [apps, allRoles, allScopes] = await Promise.all([
+      adminClient.admin_GetApplications(),
+      adminClient.admin_GetAllRoles(),
+      adminClient.admin_GetScopes(),
+    ])
+    applications.value = apps ?? []
+    roles.value = (allRoles ?? []).map((r) => r.name)
+    scopes.value = allScopes ?? []
   } catch (error) {
     console.error('Failed to load applications:', error)
   } finally {
@@ -33,64 +42,47 @@ onMounted(() => {
   loadApplications()
 })
 
-const viewApplication = async (app: ApplicationRoleInfo) => {
-  selectedApp.value = new ApplicationRoleInfo({ ...app })
-  try {
-    if (app.clientId) {
-      appRequiredRoles.value = (await adminClient.admin_GetApplicationRequiredRoles(app.clientId)) || []
-    }
-  } catch (error) {
-    console.error('Failed to load application roles:', error)
-    appRequiredRoles.value = []
-  }
+const viewApplication = (app: ApplicationDto) => {
+  errorMessage.value = null
+  selectedApp.value = app
   showAppDialog.value = true
 }
 
 const createApplication = () => {
-  selectedApp.value = new ApplicationRoleInfo({
-    clientId: '',
-    displayName: '',
-    requiredRoles: [],
-  })
+  errorMessage.value = null
+  selectedApp.value = null
   showAppDialog.value = true
 }
 
+const handleSaved = async (secret: ApplicationSecretDto | null) => {
+  if (secret?.clientSecret) {
+    issuedSecret.value = secret
+    showSecretDialog.value = true
+  }
+  await loadApplications()
+}
 
-// const toggleAppStatus = async (app: ApplicationRoleInfo) => {
-//   app.isActive = !app.isActive
-// }
+const deleteApplication = async (app: ApplicationDto) => {
+  errorMessage.value = null
+  const confirmed = await confirm({
+    title: 'Delete Application',
+    message: `Delete "${app.displayName ?? app.clientId}"? Its tokens and authorizations are revoked and it can no longer sign users in. This can't be undone.`,
+    confirm: { text: 'Yes, Delete', severity: 'danger' },
+    cancel: { text: 'Cancel', severity: 'secondary' },
+  })
+  if (!confirmed) return
 
-// const addRoleToApplication = async (role: string) => {
-//   if (!selectedApp.value?.clientId) return
-
-//   isUpdatingRoles.value = true
-//   try {
-//     appRequiredRoles.value.push(role)
-//     await adminClient.admin_UpdateApplicationRequiredRoles(selectedApp.value.clientId, appRequiredRoles.value)
-//   } catch (error) {
-//     console.error('Failed to add role:', error)
-//     appRequiredRoles.value = appRequiredRoles.value.filter(r => r !== role)
-//   } finally {
-//     isUpdatingRoles.value = false
-//   }
-// }
-
-// const removeRoleFromApplication = async (role: string) => {
-//   if (!selectedApp.value?.clientId) return
-
-//   isUpdatingRoles.value = true
-//   try {
-//     appRequiredRoles.value = appRequiredRoles.value.filter(r => r !== role)
-//     await adminClient.admin_UpdateApplicationRequiredRoles(selectedApp.value.clientId, appRequiredRoles.value)
-//   } catch (error) {
-//     console.error('Failed to remove role:', error)
-//   } finally {
-//     isUpdatingRoles.value = false
-//   }
-// }
-
-
-
+  deletingId.value = app.clientId
+  try {
+    await adminClient.admin_DeleteApplication(app.clientId)
+    await loadApplications()
+  } catch (error) {
+    errorMessage.value = apiErrorMessage(error, 'The application could not be deleted.')
+    console.error('Failed to delete application:', error)
+  } finally {
+    deletingId.value = null
+  }
+}
 </script>
 
 <template>
@@ -102,7 +94,6 @@ const createApplication = () => {
           <h1>Application Management</h1>
         </div>
         <Button
-          v-if="canEdit"
           label="Register Application"
           icon="fa-duotone fa-plus"
           severity="success"
@@ -114,10 +105,20 @@ const createApplication = () => {
       <div class="apps-content">
         <p class="section-description">
           Manage OAuth/OIDC applications, client credentials, and redirect URIs for integrated services.
+          Applications defined in configuration are read-only.
         </p>
 
+        <Message
+          v-if="errorMessage"
+          severity="error"
+          :closable="false"
+          class="error-message"
+        >
+          {{ errorMessage }}
+        </Message>
+
         <div
-          v-if="isLoading"
+          v-if="isLoading && applications.length === 0"
           class="loading-state"
         >
           <ProgressSpinner />
@@ -134,20 +135,36 @@ const createApplication = () => {
             <div class="app-section">
               <div class="subsection-header">
                 <div class="subsection-title">
-                  <h3>{{ app.displayName }}</h3>
+                  <h3>{{ app.displayName || app.clientId }}</h3>
                   <Tag
-                    :value="true ? 'Active' : 'Inactive'"
-                    :severity="true ? 'success' : 'secondary'"
+                    :value="app.clientType === 'confidential' ? 'Confidential' : 'Public'"
+                    :severity="app.clientType === 'confidential' ? 'warn' : 'info'"
+                  />
+                  <Tag
+                    v-if="app.isConfigManaged"
+                    value="Managed by configuration"
+                    severity="secondary"
+                    icon="fa-duotone fa-lock"
                   />
                 </div>
                 <div class="subsection-actions">
                   <Button
-                    icon="fa-duotone fa-eye"
+                    :icon="app.isConfigManaged ? 'fa-duotone fa-eye' : 'fa-duotone fa-pen'"
                     text
                     rounded
                     severity="info"
                     @click="viewApplication(app)"
-                    v-tooltip.top="'View Details'"
+                    v-tooltip.top="app.isConfigManaged ? 'View Details' : 'Edit'"
+                  />
+                  <Button
+                    v-if="!app.isConfigManaged"
+                    icon="fa-duotone fa-trash"
+                    text
+                    rounded
+                    severity="danger"
+                    :loading="deletingId === app.clientId"
+                    @click="deleteApplication(app)"
+                    v-tooltip.top="'Delete'"
                   />
                 </div>
               </div>
@@ -155,8 +172,26 @@ const createApplication = () => {
               <div class="app-details-section">
                 <CopyField
                   label="Client ID"
-                  :value="app.clientId || ''"
+                  :value="app.clientId"
                 />
+
+                <div class="detail-item">
+                  <label>Scopes</label>
+                  <div class="roles-section">
+                    <Tag
+                      v-for="scope in app.scopes"
+                      :key="scope"
+                      :value="scope"
+                      severity="secondary"
+                    />
+                    <span
+                      v-if="!app.scopes?.length"
+                      class="no-roles"
+                    >
+                      Default scopes only
+                    </span>
+                  </div>
+                </div>
 
                 <div class="detail-item">
                   <label>Required Roles ({{ app.requiredRoles?.length || 0 }})</label>
@@ -167,15 +202,13 @@ const createApplication = () => {
                       :value="role"
                     />
                     <span
-                      v-if="!app.requiredRoles || app.requiredRoles.length === 0"
+                      v-if="!app.requiredRoles?.length"
                       class="no-roles"
                     >
                       No roles required
                     </span>
                   </div>
                 </div>
-
-
               </div>
             </div>
           </template>
@@ -192,69 +225,18 @@ const createApplication = () => {
     </template>
   </Card>
 
-  <!-- Application Details Dialog -->
-  <!-- <Dialog
+  <ApplicationDialog
     v-model:visible="showAppDialog"
-    :header="selectedApp?.displayName || 'Application Details'"
-    :modal="true"
-    :style="{ width: '50rem' }"
-    :breakpoints="{ '960px': '75vw', '640px': '90vw' }"
-  >
-    <div
-      v-if="selectedApp"
-      class="app-dialog-content"
-    >
-      <div class="detail-section">
-        <label>Client ID</label>
-        <CopyField :value="selectedApp.clientId || ''" />
-      </div>
+    :application="selectedApp"
+    :roles="roles"
+    :scopes="scopes"
+    @saved="handleSaved"
+  />
 
-      <div class="detail-section">
-        <label>Required Roles</label>
-        <div class="roles-section">
-          <Tag
-            v-for="role in appRequiredRoles"
-            :key="role"
-            :value="role"
-            :closable="canEdit"
-            @remove="() => removeRoleFromApplication(role)"
-          />
-          <span
-            v-if="appRequiredRoles.length === 0"
-            class="no-roles"
-          >
-            No roles required
-          </span>
-        </div>
-      </div>
-
-      <div class="detail-section">
-        <label>Status</label>
-        <div class="status-section">
-          <Tag
-            :value="selectedApp.isActive ? 'Active' : 'Inactive'"
-            :severity="selectedApp.isActive ? 'success' : 'secondary'"
-          />
-          <span class="status-text">
-            <template v-if="selectedApp.isActive">
-              This application is currently active and can authenticate users.
-            </template>
-            <template v-else>
-              This application is currently disabled and cannot authenticate users.
-            </template>
-          </span>
-        </div>
-      </div>
-
-      <div class="detail-section">
-        <label>Created Date</label>
-        <InputText
-          :value="formatDate(selectedApp.createdDate)"
-          readonly
-        />
-      </div>
-    </div>
-  </Dialog> -->
+  <ClientSecretDialog
+    v-model:visible="showSecretDialog"
+    :secret="issuedSecret"
+  />
 </template>
 
 <style lang="scss" scoped>
@@ -273,6 +255,10 @@ const createApplication = () => {
   gap: 0;
 }
 
+.error-message {
+  margin: 1rem 0;
+}
+
 .app-section {
   display: flex;
   flex-direction: column;
@@ -284,12 +270,6 @@ const createApplication = () => {
   flex-direction: column;
   gap: 1rem;
   padding-bottom: 0.5rem;
-}
-
-.app-description {
-  margin: 0;
-  color: var(--text-color-secondary);
-  font-size: 0.9rem;
 }
 
 .detail-item {
@@ -312,80 +292,6 @@ const createApplication = () => {
       color: var(--text-color-secondary);
       font-size: 0.9rem;
       padding: 0.5rem 0;
-    }
-  }
-}
-
-.redirect-uris {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-
-  .uri-chip {
-    font-size: 0.75rem;
-    max-width: 300px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-
-    &.more {
-      background: var(--surface-200);
-    }
-  }
-}
-
-.app-dialog-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-
-  .detail-section {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-
-    label {
-      font-weight: 600;
-      font-size: 0.9rem;
-    }
-
-    .roles-section {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-
-      .no-roles {
-        color: var(--text-color-secondary);
-        font-size: 0.9rem;
-        padding: 0.5rem 0;
-      }
-    }
-  }
-
-  .status-section {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 1rem;
-    background: var(--surface-50);
-    border-radius: var(--border-radius);
-
-    .status-text {
-      font-size: 0.9rem;
-      color: var(--text-color-secondary);
-    }
-  }
-}
-
-@media (max-width: 768px) {
-  .app-card {
-    .app-header {
-      flex-direction: column-reverse;
-
-      subsection-header {
-        .subsection-actions {
-          flex-wrap: wrap
-        }
-      }
     }
   }
 }

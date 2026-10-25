@@ -1,15 +1,9 @@
-﻿using Identity.App.Data;
-using Identity.App.EndPoints.External.Models;
+﻿using Identity.App.EndPoints.Admin.Models;
 using Identity.App.EndPoints.Users;
-using Identity.App.Models;
 using Identity.App.Models.Consts;
 using Identity.App.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using OpenIddict.Abstractions;
-using UpdateUserDto = Identity.App.EndPoints.External.Models.UpdateUserDto;
-using UserDto = Identity.App.EndPoints.Users.Models.UserDto;
 
 namespace Identity.App.EndPoints.Admin;
 
@@ -55,9 +49,24 @@ public static class AdminEndpoints
         group.MapDelete("users/email/{email}/roles/{roleName}", RemoveUserFromRoleByEmailHandler)
             .WithName("Admin/RemoveUserFromRoleByEmail");
 
-        // Application role requirements endpoints
-        group.MapGet("applications", GetApplicationsWithRolesHandler)
-            .WithName("Admin/GetApplicationsWithRoles");
+        // Applications
+        group.MapGet("applications", GetApplicationsHandler)
+            .WithName("Admin/GetApplications");
+
+        group.MapPost("applications", CreateApplicationHandler)
+            .WithName("Admin/CreateApplication");
+
+        group.MapGet("applications/{clientId}", GetApplicationHandler)
+            .WithName("Admin/GetApplication");
+
+        group.MapPut("applications/{clientId}", UpdateApplicationHandler)
+            .WithName("Admin/UpdateApplication");
+
+        group.MapDelete("applications/{clientId}", DeleteApplicationHandler)
+            .WithName("Admin/DeleteApplication");
+
+        group.MapPut("applications/{clientId}/secret", SetApplicationSecretHandler)
+            .WithName("Admin/SetApplicationSecret");
 
         group.MapGet("applications/{clientId}/roles", GetApplicationRequiredRolesHandler)
             .WithName("Admin/GetApplicationRequiredRoles");
@@ -65,9 +74,24 @@ public static class AdminEndpoints
         group.MapPut("applications/{clientId}/roles", UpdateApplicationRequiredRolesHandler)
             .WithName("Admin/UpdateApplicationRequiredRoles");
 
-        // All roles endpoint
+        group.MapGet("scopes", GetScopesHandler)
+            .WithName("Admin/GetScopes");
+
+        // Roles
         group.MapGet("roles", GetAllRolesHandler)
             .WithName("Admin/GetAllRoles");
+
+        group.MapPost("roles", CreateRoleHandler)
+            .WithName("Admin/CreateRole");
+
+        group.MapPut("roles/{name}", RenameRoleHandler)
+            .WithName("Admin/RenameRole");
+
+        group.MapDelete("roles/{name}", DeleteRoleHandler)
+            .WithName("Admin/DeleteRole");
+
+        group.MapGet("roles/{name}/users", GetRoleMembersHandler)
+            .WithName("Admin/GetRoleMembers");
 
         // Two-Factor Authentication reset endpoints
         group.MapPost("users/{userId}/2fa/reset", ResetUser2faByIdHandler)
@@ -101,152 +125,120 @@ public static class AdminEndpoints
         return TypedResults.Ok(roles);
     }
 
-    private static async Task<Results<Ok, BadRequest, NotFound>> AddUserToRoleByIdHandler(
+    private static async Task<Results<Ok, BadRequest<string>, NotFound, Conflict<string>>> AddUserToRoleByIdHandler(
         [FromRoute] string userId,
         [FromRoute] string roleName,
         UserManagementService userManagementService)
-    {
-        var result = await userManagementService.AddUserToRoleByIdAsync(userId, roleName);
-        if (!result)
-            return TypedResults.BadRequest();
-        return TypedResults.Ok();
-    }
+        => ToResult(await userManagementService.AddUserToRoleByIdAsync(userId, roleName));
 
-    private static async Task<Results<Ok, BadRequest, NotFound>> AddUserToRoleByEmailHandler(
+    private static async Task<Results<Ok, BadRequest<string>, NotFound, Conflict<string>>> AddUserToRoleByEmailHandler(
         [FromRoute] string email,
         [FromRoute] string roleName,
         UserManagementService userManagementService)
-    {
-        var result = await userManagementService.AddUserToRoleByEmailAsync(email, roleName);
-        if (!result)
-            return TypedResults.BadRequest();
-        return TypedResults.Ok();
-    }
+        => ToResult(await userManagementService.AddUserToRoleByEmailAsync(email, roleName));
 
-    private static async Task<Results<Ok, BadRequest, NotFound>> RemoveUserFromRoleByIdHandler(
+    private static async Task<Results<Ok, BadRequest<string>, NotFound, Conflict<string>>> RemoveUserFromRoleByIdHandler(
         [FromRoute] string userId,
         [FromRoute] string roleName,
         UserManagementService userManagementService)
-    {
-        var result = await userManagementService.RemoveUserFromRoleByIdAsync(userId, roleName);
-        if (!result)
-            return TypedResults.BadRequest();
-        return TypedResults.Ok();
-    }
+        => ToResult(await userManagementService.RemoveUserFromRoleByIdAsync(userId, roleName));
 
-    private static async Task<Results<Ok, BadRequest, NotFound>> RemoveUserFromRoleByEmailHandler(
+    private static async Task<Results<Ok, BadRequest<string>, NotFound, Conflict<string>>> RemoveUserFromRoleByEmailHandler(
         [FromRoute] string email,
         [FromRoute] string roleName,
         UserManagementService userManagementService)
+        => ToResult(await userManagementService.RemoveUserFromRoleByEmailAsync(email, roleName));
+
+    private static Results<Ok, BadRequest<string>, NotFound, Conflict<string>> ToResult(RoleMembershipResult result) => result switch
     {
-        var result = await userManagementService.RemoveUserFromRoleByEmailAsync(email, roleName);
-        if (!result)
-            return TypedResults.BadRequest();
-        return TypedResults.Ok();
+        RoleMembershipResult.Ok => TypedResults.Ok(),
+        RoleMembershipResult.UserNotFound => TypedResults.NotFound(),
+        RoleMembershipResult.RoleNotFound => TypedResults.BadRequest("The role does not exist."),
+        RoleMembershipResult.ConfigManaged => TypedResults.Conflict("This user's roles are managed by configuration and can't be changed here."),
+        RoleMembershipResult.OwnAdminRole => TypedResults.Conflict("You can't remove the Admin role from yourself."),
+        _ => TypedResults.BadRequest("The role membership could not be changed."),
+    };
+
+    // Application Handlers
+
+    private static async Task<Ok<List<ApplicationDto>>> GetApplicationsHandler(
+        ApplicationManagementService applicationService)
+        => TypedResults.Ok(await applicationService.ListAsync());
+
+    private static async Task<Results<Ok<ApplicationDto>, NotFound>> GetApplicationHandler(
+        [FromRoute] string clientId,
+        ApplicationManagementService applicationService)
+    {
+        var application = await applicationService.GetAsync(clientId);
+        return application == null ? TypedResults.NotFound() : TypedResults.Ok(application);
     }
 
-    // Application Role Requirements Handlers
+    private static async Task<Results<Ok<ApplicationSecretDto>, BadRequest<string>, Conflict<string>>> CreateApplicationHandler(
+        [FromBody] SaveApplicationDto application,
+        ApplicationManagementService applicationService)
+        => await applicationService.CreateAsync(application);
 
-    private static async Task<Ok<List<ApplicationRoleInfo>>> GetApplicationsWithRolesHandler(
-        IOpenIddictApplicationManager applicationManager)
-    {
-        var applications = new List<ApplicationRoleInfo>();
-        
-        await foreach (var app in applicationManager.ListAsync())
-        {
-            var clientId = await applicationManager.GetClientIdAsync(app);
-            var displayName = await applicationManager.GetDisplayNameAsync(app);
-            var properties = await applicationManager.GetPropertiesAsync(app);
-            
-            var requiredRoles = new List<string>();
-            if (properties.TryGetValue("RequiredRoles", out var rolesElement))
-            {
-                if (rolesElement is System.Text.Json.JsonElement jsonElement && 
-                    jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                {
-                    requiredRoles = jsonElement.EnumerateArray()
-                        .Where(e => e.ValueKind == System.Text.Json.JsonValueKind.String)
-                        .Select(e => e.GetString() ?? "")
-                        .Where(s => !string.IsNullOrWhiteSpace(s))
-                        .ToList();
-                }
-            }
+    private static async Task<Results<Ok<ApplicationSecretDto>, BadRequest<string>, Conflict<string>, NotFound>> UpdateApplicationHandler(
+        [FromRoute] string clientId,
+        [FromBody] SaveApplicationDto application,
+        ApplicationManagementService applicationService)
+        => await applicationService.UpdateAsync(clientId, application);
 
-            applications.Add(new ApplicationRoleInfo
-            {
-                ClientId = clientId,
-                DisplayName = displayName,
-                RequiredRoles = requiredRoles
-            });
-        }
+    private static async Task<Results<Ok, Conflict<string>, NotFound>> DeleteApplicationHandler(
+        [FromRoute] string clientId,
+        ApplicationManagementService applicationService)
+        => await applicationService.DeleteAsync(clientId);
 
-        return TypedResults.Ok(applications);
-    }
+    private static async Task<Results<Ok<ApplicationSecretDto>, BadRequest<string>, Conflict<string>, NotFound>> SetApplicationSecretHandler(
+        [FromRoute] string clientId,
+        [FromBody] SetClientSecretDto secret,
+        ApplicationManagementService applicationService)
+        => await applicationService.SetSecretAsync(clientId, secret);
 
     private static async Task<Results<Ok<List<string>>, NotFound>> GetApplicationRequiredRolesHandler(
         [FromRoute] string clientId,
-        IOpenIddictApplicationManager applicationManager)
+        ApplicationManagementService applicationService)
     {
-        var app = await applicationManager.FindByClientIdAsync(clientId);
-        if (app == null)
-            return TypedResults.NotFound();
-
-        var properties = await applicationManager.GetPropertiesAsync(app);
-        var requiredRoles = new List<string>();
-        
-        if (properties.TryGetValue("RequiredRoles", out var rolesElement))
-        {
-            if (rolesElement is System.Text.Json.JsonElement jsonElement && 
-                jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-            {
-                requiredRoles = jsonElement.EnumerateArray()
-                    .Where(e => e.ValueKind == System.Text.Json.JsonValueKind.String)
-                    .Select(e => e.GetString() ?? "")
-                    .Where(s => !string.IsNullOrWhiteSpace(s))
-                    .ToList();
-            }
-        }
-
-        return TypedResults.Ok(requiredRoles);
+        var application = await applicationService.GetAsync(clientId);
+        return application == null ? TypedResults.NotFound() : TypedResults.Ok(application.RequiredRoles);
     }
 
-    private static async Task<Results<Ok, NotFound>> UpdateApplicationRequiredRolesHandler(
+    private static async Task<Results<Ok, BadRequest<string>, Conflict<string>, NotFound>> UpdateApplicationRequiredRolesHandler(
         [FromRoute] string clientId,
         [FromBody] List<string> requiredRoles,
-        IOpenIddictApplicationManager applicationManager,
-        SecurityAudit audit)
-    {
-        var app = await applicationManager.FindByClientIdAsync(clientId);
-        if (app == null)
-            return TypedResults.NotFound();
+        ApplicationManagementService applicationService)
+        => await applicationService.UpdateRequiredRolesAsync(clientId, requiredRoles);
 
-        var descriptor = new OpenIddictApplicationDescriptor();
-        await applicationManager.PopulateAsync(descriptor, app);
-        
-        descriptor.Properties["RequiredRoles"] = System.Text.Json.JsonSerializer.SerializeToElement(
-            requiredRoles ?? new List<string>());
+    private static async Task<Ok<List<string>>> GetScopesHandler(
+        ApplicationManagementService applicationService)
+        => TypedResults.Ok(await applicationService.ListScopesAsync());
 
-        await applicationManager.UpdateAsync(app, descriptor);
-
-        audit.Log(SecurityEvent.ApplicationRolesUpdated, clientId: clientId,
-            detail: $"required roles '{string.Join(", ", requiredRoles ?? new List<string>())}'");
-
-        return TypedResults.Ok();
-    }
+    // Role Handlers
 
     private static async Task<Ok<List<RoleInfo>>> GetAllRolesHandler(
-        RoleManager<IdentityRole> roleManager)
-    {
-        var roles = roleManager.Roles
-            .Select(r => new RoleInfo 
-            { 
-                Id = r.Id, 
-                Name = r.Name 
-            })
-            .ToList();
+        RoleManagementService roleService)
+        => TypedResults.Ok(await roleService.ListAsync());
 
-        return TypedResults.Ok(roles);
-    }
+    private static async Task<Results<Ok<RoleInfo>, BadRequest<string>, Conflict<string>>> CreateRoleHandler(
+        [FromBody] RoleNameDto role,
+        RoleManagementService roleService)
+        => await roleService.CreateAsync(role);
+
+    private static async Task<Results<Ok<RoleInfo>, BadRequest<string>, Conflict<string>, NotFound>> RenameRoleHandler(
+        [FromRoute] string name,
+        [FromBody] RoleNameDto role,
+        RoleManagementService roleService)
+        => await roleService.RenameAsync(name, role);
+
+    private static async Task<Results<Ok, Conflict<string>, NotFound>> DeleteRoleHandler(
+        [FromRoute] string name,
+        RoleManagementService roleService)
+        => await roleService.DeleteAsync(name);
+
+    private static async Task<Results<Ok<List<RoleMemberDto>>, NotFound>> GetRoleMembersHandler(
+        [FromRoute] string name,
+        RoleManagementService roleService)
+        => await roleService.GetMembersAsync(name);
 
     // Two-Factor Authentication Reset Handlers
 
@@ -269,20 +261,4 @@ public static class AdminEndpoints
             return TypedResults.NotFound();
         return TypedResults.Ok();
     }
-
-    
-}
-
-// DTOs
-public class ApplicationRoleInfo
-{
-    public string ClientId { get; set; }
-    public string DisplayName { get; set; }
-    public List<string> RequiredRoles { get; set; }
-}
-
-public class RoleInfo
-{
-    public string Id { get; set; }
-    public string Name { get; set; }
 }

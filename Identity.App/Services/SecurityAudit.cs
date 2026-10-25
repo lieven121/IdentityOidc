@@ -36,6 +36,13 @@ public enum SecurityEvent
     RoleRemoved = 1304,
     TwoFactorReset = 1305,
     ApplicationRolesUpdated = 1306,
+    ApplicationCreated = 1307,
+    ApplicationUpdated = 1308,
+    ApplicationDeleted = 1309,
+    ApplicationSecretChanged = 1310,
+    RoleCreated = 1311,
+    RoleRenamed = 1312,
+    RoleDeleted = 1313,
 }
 
 /// <summary>

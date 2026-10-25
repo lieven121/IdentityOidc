@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { browserSupportsWebAuthn, startRegistration } from '@simplewebauthn/browser'
-import ConfirmDialog from '@/components/Common/Dialogs/ConfirmDialog.vue'
-import type { ConfirmDialogModel } from '@/components/Common/Dialogs/ConfirmDialogModel'
 import {
   AddPasskeyDto,
   ApiException,
@@ -9,7 +7,7 @@ import {
   PasskeyDto,
   UsersClient,
 } from '@/resources/api-clients/identity-api-client'
-import { useDialog } from 'primevue'
+import { apiErrorMessage, useConfirmDialog } from '@/utils/dialogs'
 
 interface Emits {
   (e: 'changed'): void
@@ -17,7 +15,7 @@ interface Emits {
 
 const emit = defineEmits<Emits>()
 
-const dialog = useDialog()
+const { ask, confirm } = useConfirmDialog()
 const usersClient = new UsersClient()
 
 const passkeys = ref<PasskeyDto[]>([])
@@ -41,36 +39,6 @@ const loadPasskeys = async () => {
   } finally {
     isLoading.value = false
   }
-}
-
-// Opens the shared confirm dialog and resolves with the entered value, or null when cancelled.
-function ask(data: ConfirmDialogModel): Promise<string | null> {
-  return new Promise((resolve) => {
-    dialog.open(ConfirmDialog, {
-      data,
-      props: {
-        style: { maxWidth: '40rem', width: '100%' },
-        modal: true,
-        closable: false,
-        dismissableMask: false,
-        closeOnEscape: false,
-        showHeader: false,
-      },
-      onClose: (opt) => resolve(typeof opt?.data === 'string' ? opt.data : null),
-    })
-  })
-}
-
-function apiErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof ApiException && error.status === 400 && error.response) {
-    try {
-      const parsed = JSON.parse(error.response)
-      if (typeof parsed === 'string') return parsed
-    } catch {
-      // not a plain message
-    }
-  }
-  return fallback
 }
 
 const handleAddPasskey = async () => {
@@ -130,24 +98,11 @@ const handleRemovePasskey = async (passkey: PasskeyDto) => {
   if (!passkey.id) return
   const id = passkey.id
 
-  const confirmed = await new Promise<boolean>((resolve) => {
-    dialog.open(ConfirmDialog, {
-      data: {
-        title: 'Remove Passkey',
-        message: `Remove the passkey "${passkey.name ?? 'Passkey'}"? You will no longer be able to sign in with it.`,
-        confirm: { text: 'Yes, Remove', severity: 'danger' },
-        cancel: { text: 'Cancel', severity: 'secondary' },
-      },
-      props: {
-        style: { maxWidth: '40rem', width: '100%' },
-        modal: true,
-        closable: false,
-        dismissableMask: false,
-        closeOnEscape: false,
-        showHeader: false,
-      },
-      onClose: (opt) => resolve(opt?.data === true),
-    })
+  const confirmed = await confirm({
+    title: 'Remove Passkey',
+    message: `Remove the passkey "${passkey.name ?? 'Passkey'}"? You will no longer be able to sign in with it.`,
+    confirm: { text: 'Yes, Remove', severity: 'danger' },
+    cancel: { text: 'Cancel', severity: 'secondary' },
   })
   if (!confirmed) return
 
