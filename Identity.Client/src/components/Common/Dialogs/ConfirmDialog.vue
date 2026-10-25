@@ -65,7 +65,7 @@ function cancel() {
           :placeholder="options.input.placeholder"
           :autocomplete="options.input.autocomplete ?? 'off'"
           autofocus
-          @keydown.enter="confirm"
+          @keydown.enter.prevent="confirm"
         />
       </div>
     </div>
