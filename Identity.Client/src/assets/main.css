@@ -20,3 +20,9 @@ body {
 .p-floatlabel input {
   width: 100%;
 }
+
+/* PrimeVue draws the message border as an outline outside the box, which scrolling
+   containers (dialog content, account cards) clip. Draw it just inside instead. */
+.p-message {
+  outline-offset: calc(-1 * var(--p-message-border-width, 1px));
+}

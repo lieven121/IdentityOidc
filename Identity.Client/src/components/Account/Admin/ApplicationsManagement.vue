@@ -18,6 +18,22 @@ const scopes = ref<string[]>([])
 const isLoading = ref(false)
 const errorMessage = ref<string | null>(null)
 const deletingId = ref<string | null>(null)
+const search = ref('')
+
+// Matches name, client ID, type, scopes and required roles.
+const filteredApplications = computed(() => {
+  const term = search.value.trim().toLowerCase()
+  if (!term) return applications.value
+  return applications.value.filter((app) =>
+    [
+      app.displayName,
+      app.clientId,
+      app.clientType,
+      ...(app.scopes ?? []),
+      ...(app.requiredRoles ?? []),
+    ].some((value) => value?.toLowerCase().includes(term)),
+  )
+})
 
 const selectedApp = ref<ApplicationDto | null>(null)
 const showAppDialog = ref(false)
@@ -112,6 +128,22 @@ const deleteApplication = async (app: ApplicationDto) => {
           services. Applications defined in configuration are read-only.
         </p>
 
+        <InputGroup class="search-bar">
+          <InputGroupAddon>
+            <i class="fa-duotone fa-magnifying-glass"></i>
+          </InputGroupAddon>
+          <InputText v-model="search" placeholder="Search by name, client ID, scope or role" />
+          <InputGroupAddon v-if="search">
+            <Button
+              icon="fa-duotone fa-xmark"
+              text
+              rounded
+              severity="secondary"
+              @click="search = ''"
+            />
+          </InputGroupAddon>
+        </InputGroup>
+
         <Message v-if="errorMessage" severity="error" :closable="false" class="error-message">
           {{ errorMessage }}
         </Message>
@@ -122,7 +154,7 @@ const deleteApplication = async (app: ApplicationDto) => {
         </div>
 
         <template v-else>
-          <template v-for="(app, index) in applications" :key="app.clientId">
+          <template v-for="(app, index) in filteredApplications" :key="app.clientId">
             <Divider v-if="index > 0" />
 
             <div class="app-section">
@@ -191,9 +223,9 @@ const deleteApplication = async (app: ApplicationDto) => {
             </div>
           </template>
 
-          <div v-if="applications.length === 0" class="empty-state">
+          <div v-if="filteredApplications.length === 0" class="empty-state">
             <i class="fa-duotone fa-box"></i>
-            <p>No applications found</p>
+            <p>{{ search ? `No applications match "${search}"` : 'No applications found' }}</p>
           </div>
         </template>
       </div>
@@ -225,6 +257,10 @@ const deleteApplication = async (app: ApplicationDto) => {
   display: flex;
   flex-direction: column;
   gap: 0;
+}
+
+.search-bar {
+  margin: 1rem 0 0.5rem;
 }
 
 .error-message {

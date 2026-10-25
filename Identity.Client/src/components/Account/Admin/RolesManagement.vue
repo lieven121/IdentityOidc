@@ -16,6 +16,12 @@ const roles = ref<RoleInfo[]>([])
 const isLoading = ref(false)
 const errorMessage = ref<string | null>(null)
 const busyRole = ref<string | null>(null)
+const search = ref('')
+
+const filteredRoles = computed(() => {
+  const term = search.value.trim().toLowerCase()
+  return term ? roles.value.filter((role) => role.name.toLowerCase().includes(term)) : roles.value
+})
 
 const selectedRole = ref<RoleInfo | null>(null)
 const showRoleDialog = ref(false)
@@ -197,6 +203,22 @@ const removeMember = async (member: RoleMemberDto) => {
           Roles defined in configuration can't be renamed or deleted.
         </p>
 
+        <InputGroup class="search-bar">
+          <InputGroupAddon>
+            <i class="fa-duotone fa-magnifying-glass"></i>
+          </InputGroupAddon>
+          <InputText v-model="search" placeholder="Search roles" />
+          <InputGroupAddon v-if="search">
+            <Button
+              icon="fa-duotone fa-xmark"
+              text
+              rounded
+              severity="secondary"
+              @click="search = ''"
+            />
+          </InputGroupAddon>
+        </InputGroup>
+
         <Message v-if="errorMessage" severity="error" :closable="false" class="error-message">
           {{ errorMessage }}
         </Message>
@@ -207,7 +229,7 @@ const removeMember = async (member: RoleMemberDto) => {
         </div>
 
         <template v-else>
-          <template v-for="(role, index) in roles" :key="role.id">
+          <template v-for="(role, index) in filteredRoles" :key="role.id">
             <Divider v-if="index > 0" />
 
             <div class="role-section">
@@ -259,9 +281,9 @@ const removeMember = async (member: RoleMemberDto) => {
             </div>
           </template>
 
-          <div v-if="roles.length === 0" class="empty-state">
+          <div v-if="filteredRoles.length === 0" class="empty-state">
             <i class="fa-duotone fa-key"></i>
-            <p>No roles found</p>
+            <p>{{ search ? `No roles match "${search}"` : 'No roles found' }}</p>
           </div>
         </template>
       </div>
@@ -360,6 +382,10 @@ const removeMember = async (member: RoleMemberDto) => {
   display: flex;
   flex-direction: column;
   gap: 0;
+}
+
+.search-bar {
+  margin: 1rem 0 0.5rem;
 }
 
 .error-message {
