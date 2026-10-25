@@ -20,10 +20,17 @@ public static class IdentityConfig
                 options.Password.RequireLowercase = true;
                 options.Password.RequireNonAlphanumeric = false;
                 options.Password.RequireUppercase = true;
-                options.Password.RequiredLength = 6;
+                options.Password.RequiredLength = 8;
                 options.Password.RequiredUniqueChars = 1;
 
+                options.Lockout.AllowedForNewUsers = true;
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+
                 options.User.RequireUniqueEmail = true;
+
+                // Version3 adds the AspNetUserPasskeys table.
+                options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
 
             })
             .AddRoles<IdentityRole>()
@@ -38,6 +45,9 @@ public static class IdentityConfig
             options.ClaimsIdentity.UserIdClaimType = OpenIddictConstants.Claims.Subject;
             options.ClaimsIdentity.RoleClaimType = OpenIddictConstants.Claims.Role;
         }); 
+
+        // ServerDomain defaults to the request host; set Passkeys:ServerDomain to pin the relying party.
+        app.Services.Configure<IdentityPasskeyOptions>(app.Configuration.GetSection("Passkeys"));
 
         app.Services.AddAuthentication(options =>
         {

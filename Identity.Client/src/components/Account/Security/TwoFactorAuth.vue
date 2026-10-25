@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import ConfirmDialog from '@/components/Common/Dialogs/ConfirmDialog.vue'
-import { UsersClient, TwoFactorStatusDto } from '@/resources/api-clients/identity-api-client'
+import { UsersClient, TwoFactorStatusDto, TwoFactorCodeDto } from '@/resources/api-clients/identity-api-client'
 import { useDialog } from 'primevue'
 
 const dialog = useDialog()
@@ -8,7 +8,13 @@ const dialog = useDialog()
 interface Emits {
   (e: 'enable2fa'): void
   (e: 'disable2fa'): void
-  (e: 'generate-codes'): void
+  (e: 'generate-codes', code: string): void
+}
+
+const codeInput = {
+  label: 'Authenticator code or recovery code',
+  placeholder: '123456',
+  autocomplete: 'one-time-code',
 }
 
 const emit = defineEmits<Emits>()
@@ -51,6 +57,7 @@ const handleGenerateRecoveryCodes = () => {
         text: 'Cancel',
         severity: 'secondary'
       },
+      input: codeInput,
     },
     props: {
       style: {
@@ -65,8 +72,8 @@ const handleGenerateRecoveryCodes = () => {
       showHeader: false,
     },
     onClose: (opt) => {
-      if (opt?.data) {
-        emit('generate-codes')
+      if (typeof opt?.data === 'string') {
+        emit('generate-codes', opt.data)
       }
     }
   });
@@ -87,6 +94,7 @@ const handleDisable2fa = async () => {
         text: 'Cancel',
         severity: 'secondary'
       },
+      input: codeInput,
     },
     props: {
       style: {
@@ -102,9 +110,9 @@ const handleDisable2fa = async () => {
     },
     onClose: async (opt) => {
       try {
-        if (!opt?.data)
+        if (typeof opt?.data !== 'string')
           return
-        await usersClient.disable2fa()
+        await usersClient.disable2fa(new TwoFactorCodeDto({ code: opt.data }))
         await loadTwoFactorStatus()
         emit('disable2fa')
       } catch (error) {

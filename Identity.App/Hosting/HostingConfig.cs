@@ -48,15 +48,22 @@ public static class HostingConfig
             };
             forwardedHeaderOptions.KnownIPNetworks.Clear();
             forwardedHeaderOptions.KnownProxies.Clear();
-            var ips = app.Configuration.GetSection("Hosting:ReverseProxySupport")?.Get<string[]?>();
-            if (ips != null)
+            var ips = app.Configuration.GetSection("Hosting:ReverseProxyAddresses")?.Get<string[]?>();
+            foreach (var ip in ips ?? Array.Empty<string>())
             {
-                foreach (var ip in ips)
-                {
-                    if (System.Net.IPAddress.TryParse(ip, out var address))
-                        forwardedHeaderOptions.KnownProxies.Add(address);
-                }
+                if (System.Net.IPAddress.TryParse(ip, out var address))
+                    forwardedHeaderOptions.KnownProxies.Add(address);
+                else if (System.Net.IPNetwork.TryParse(ip, out var network))
+                    forwardedHeaderOptions.KnownIPNetworks.Add(network);
+                else
+                    app.Logger.LogWarning("Ignoring invalid Hosting:ReverseProxyAddresses entry '{Entry}'", ip);
             }
+
+            // Empty known lists mean X-Forwarded-* is trusted from any client (kept for backwards
+            // compatibility), which lets callers spoof their IP and scheme.
+            if (forwardedHeaderOptions.KnownProxies.Count == 0 && forwardedHeaderOptions.KnownIPNetworks.Count == 0)
+                app.Logger.LogWarning("Hosting:ReverseProxyAddresses is empty; forwarded headers are trusted from any source. Configure the proxy IPs/CIDRs.");
+
             app.UseForwardedHeaders(forwardedHeaderOptions);
         }
 
@@ -68,6 +75,26 @@ public static class HostingConfig
 
                 return next();
             });
+
+        return app;
+    }
+
+    public static WebApplication UseSecurityHeaders(this WebApplication app)
+    {
+        if (!app.Environment.IsDevelopment())
+            app.UseHsts();
+
+        app.Use((context, next) =>
+        {
+            var headers = context.Response.Headers;
+            // Prevent clickjacking of the login and account pages.
+            headers["X-Frame-Options"] = "DENY";
+            headers["Content-Security-Policy"] = "frame-ancestors 'none'";
+            headers["X-Content-Type-Options"] = "nosniff";
+            headers["Referrer-Policy"] = "no-referrer";
+
+            return next();
+        });
 
         return app;
     }

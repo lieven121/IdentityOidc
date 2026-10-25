@@ -21,13 +21,15 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 });
 
 builder.Services
-    .AutoRegisterFromIdentityApp();
+    .AutoRegisterFromIdentityApp()
+    .AddHttpContextAccessor();
 
 builder
     .ConfigureIdentity()
     .ConfigureOpenIddict()
     .ConfigureCors()
     .ConfigureSwagger()
+    .ConfigureRateLimiting()
     .ConfigureReverseProxySupport();
 
 
@@ -42,18 +44,21 @@ builder.Services
 //builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
 var app = builder.Build();
+app.UseSecurityHeaders();
 app.UseSwagger();
 app.UseUrlsFromConfig();
 
 
 app.UseReverseProxySupport();
 app.UseOpenIddict();
+app.UseRateLimiter();
 app.UseAntiforgery();
 app.UseAuthentication();
 app.UseAuthorization();
 
 var apiEnpoints = app
-    .MapGroup("api");
+    .MapGroup("api")
+    .RequireCors(CorsConfig.ApiPolicy);
 
 
 apiEnpoints.MapStatusEndpoints();

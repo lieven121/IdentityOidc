@@ -25,6 +25,7 @@ public static class AdminEndpoints
             {
                 policy.RequireAuthenticatedUser();
                 policy.RequireRole(Roles.Admin);
+                policy.RequireTwoFactorCompliance();
             }
             );
 
@@ -212,7 +213,8 @@ public static class AdminEndpoints
     private static async Task<Results<Ok, NotFound>> UpdateApplicationRequiredRolesHandler(
         [FromRoute] string clientId,
         [FromBody] List<string> requiredRoles,
-        IOpenIddictApplicationManager applicationManager)
+        IOpenIddictApplicationManager applicationManager,
+        SecurityAudit audit)
     {
         var app = await applicationManager.FindByClientIdAsync(clientId);
         if (app == null)
@@ -225,6 +227,9 @@ public static class AdminEndpoints
             requiredRoles ?? new List<string>());
 
         await applicationManager.UpdateAsync(app, descriptor);
+
+        audit.Log(SecurityEvent.ApplicationRolesUpdated, clientId: clientId,
+            detail: $"required roles '{string.Join(", ", requiredRoles ?? new List<string>())}'");
 
         return TypedResults.Ok();
     }

@@ -7,6 +7,7 @@
     <LoginForm
       position="center"
       logo="/images/logo.svg"
+      support-passkey-sign-in
     />
   </div>
 </template>

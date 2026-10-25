@@ -14,11 +14,19 @@ public class UserManagementService
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly SecurityAudit _audit;
+    private readonly ILogger<UserManagementService> _logger;
 
-    public UserManagementService(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+    public UserManagementService(
+        UserManager<ApplicationUser> userManager,
+        RoleManager<IdentityRole> roleManager,
+        SecurityAudit audit,
+        ILogger<UserManagementService> logger)
     {
         _userManager = userManager;
         _roleManager = roleManager;
+        _audit = audit;
+        _logger = logger;
     }
 
     public async Task<Results<Ok<EndPoints.Users.Models.UserDto?>, NotFound>> GetUserByEmail(string email, bool returnNullWhenNotFound = false)
@@ -80,9 +88,12 @@ public class UserManagementService
 
         var count = await qry.CountAsync();
 
+        var pageSize = Math.Clamp(filter?.PageSize ?? 50, 1, 100);
+        var page = Math.Max(filter?.Page ?? 0, 0);
+
         var users = await qry
-            .Skip(filter?.Page ?? 0 * (filter?.PageSize ?? 50))
-            .Take(filter?.PageSize ?? 50)
+            .Skip(page * pageSize)
+            .Take(pageSize)
             .Select(x => new EndPoints.Users.Models.UserDto
             {
                 Id = x.Id,
@@ -115,12 +126,19 @@ public class UserManagementService
         var res = await _userManager.CreateAsync(user);
         if (!res.Succeeded)
         {
-            Console.Error.WriteLine($"Failed to create user {user.Id}: {string.Join(", ", res.Errors.Select(e => e.Description))}");
+            _logger.LogError("Failed to create user {Email}: {Errors}", user.Email, string.Join(", ", res.Errors.Select(e => e.Description)));
+            _audit.Log(SecurityEvent.UserCreated, success: false, detail: $"email '{user.Email}'");
             return TypedResults.Conflict();
         }
 
+        _audit.Log(SecurityEvent.UserCreated, userId: user.Id, detail: $"email '{user.Email}'");
+
         if (!string.IsNullOrWhiteSpace(createUserDto.Password))
-            await _userManager.AddPasswordAsync(user, createUserDto.Password);
+        {
+            var passwordResult = await _userManager.AddPasswordAsync(user, createUserDto.Password);
+            if (!passwordResult.Succeeded)
+                _logger.LogWarning("User {UserId} created without password: {Errors}", user.Id, string.Join(", ", passwordResult.Errors.Select(e => e.Description)));
+        }
 
         return TypedResults.Ok(new EndPoints.Users.Models.UserDto
         {
@@ -150,6 +168,7 @@ public class UserManagementService
             return TypedResults.Conflict();
         }
 
+        var oldUserName = user.UserName;
         if (!string.IsNullOrWhiteSpace(updateUserDto.Username))
         {
             user.UserName = updateUserDto.Username;
@@ -159,9 +178,12 @@ public class UserManagementService
 
         if (!result.Succeeded)
         {
-            Console.Error.WriteLine($"Failed to update user {user.Id}: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+            _logger.LogError("Failed to update user {UserId}: {Errors}", user.Id, string.Join(", ", result.Errors.Select(e => e.Description)));
+            _audit.Log(SecurityEvent.UserUpdated, success: false, userId: user.Id);
             return TypedResults.Conflict();
         }
+
+        _audit.Log(SecurityEvent.UserUpdated, userId: user.Id, detail: $"username '{oldUserName}' -> '{user.UserName}'");
 
         return TypedResults.Ok(new EndPoints.Users.Models.UserDto
         {
@@ -197,8 +219,13 @@ public class UserManagementService
         var result = await _userManager.ResetPasswordAsync(user, token, password);
         if (!result.Succeeded)
         {
+            _audit.Log(SecurityEvent.PasswordReset, success: false, userId: user.Id,
+                detail: string.Join(", ", result.Errors.Select(e => e.Code)));
             return TypedResults.BadRequest();
         }
+
+        _audit.Log(SecurityEvent.PasswordReset, userId: user.Id,
+            detail: string.IsNullOrEmpty(resetPasswordDto?.NewPassword) ? "random password" : "password supplied");
         return TypedResults.Ok(new EndPoints.Users.Models.UserDto
         {
             Id = user.Id,
@@ -209,59 +236,41 @@ public class UserManagementService
     }
 
     public async Task<bool> AddUserToRoleByIdAsync(string userId, string roleName)
-    {
-        var user = await _userManager.FindByIdAsync(userId);
-        if (user == null) return false;
-
-        await EnsureRoleExistsAsync(roleName);
-        
-        if (!await _userManager.IsInRoleAsync(user, roleName))
-        {
-            var result = await _userManager.AddToRoleAsync(user, roleName);
-            return result.Succeeded;
-        }
-        return true;
-    }
+        => await AddUserToRoleAsync(await _userManager.FindByIdAsync(userId), roleName);
 
     public async Task<bool> AddUserToRoleByEmailAsync(string email, string roleName)
+        => await AddUserToRoleAsync(await _userManager.FindByEmailAsync(email), roleName);
+
+    public async Task<bool> RemoveUserFromRoleByIdAsync(string userId, string roleName)
+        => await RemoveUserFromRoleAsync(await _userManager.FindByIdAsync(userId), roleName);
+
+    public async Task<bool> RemoveUserFromRoleByEmailAsync(string email, string roleName)
+        => await RemoveUserFromRoleAsync(await _userManager.FindByEmailAsync(email), roleName);
+
+    private async Task<bool> AddUserToRoleAsync(ApplicationUser? user, string roleName)
     {
-        var user = await _userManager.FindByEmailAsync(email);
         if (user == null) return false;
 
         await EnsureRoleExistsAsync(roleName);
-        
+
+        if (await _userManager.IsInRoleAsync(user, roleName))
+            return true;
+
+        var result = await _userManager.AddToRoleAsync(user, roleName);
+        _audit.Log(SecurityEvent.RoleAdded, success: result.Succeeded, userId: user.Id, detail: $"role '{roleName}'");
+        return result.Succeeded;
+    }
+
+    private async Task<bool> RemoveUserFromRoleAsync(ApplicationUser? user, string roleName)
+    {
+        if (user == null) return false;
+
         if (!await _userManager.IsInRoleAsync(user, roleName))
-        {
-            var result = await _userManager.AddToRoleAsync(user, roleName);
-            return result.Succeeded;
-        }
-        return true;
-    }
+            return true;
 
-    public async Task<bool> RemoveUserFromRoleByIdAsync(string userId, string roleName)
-    {
-        var user = await _userManager.FindByIdAsync(userId);
-        if (user == null) return false;
-
-        if (await _userManager.IsInRoleAsync(user, roleName))
-        {
-            var result = await _userManager.RemoveFromRoleAsync(user, roleName);
-            return result.Succeeded;
-        }
-        return true;
-    }
-
-    public async Task<bool> RemoveUserFromRoleByEmailAsync(string email, string roleName)
-    {
-        var user = await _userManager.FindByEmailAsync(email);
-        if (user == null) return false;
-
-        if (await _userManager.IsInRoleAsync(user, roleName))
-        {
-            var result = await _userManager.RemoveFromRoleAsync(user, roleName);
-            return result.Succeeded;
-        }
-        return true;
+        var result = await _userManager.RemoveFromRoleAsync(user, roleName);
+        _audit.Log(SecurityEvent.RoleRemoved, success: result.Succeeded, userId: user.Id, detail: $"role '{roleName}'");
+        return result.Succeeded;
     }
 
     public async Task<IList<string>> GetUserRolesByIdAsync(string userId)
@@ -360,6 +369,20 @@ public class UserManagementService
         return (true, recoveryCodes);
     }
 
+    // Accepts a current authenticator code, or an unused recovery code (which is consumed).
+    public async Task<bool> VerifyTwoFactorCodeAsync(ApplicationUser? user, string? code)
+    {
+        if (user == null || string.IsNullOrWhiteSpace(code)) return false;
+
+        var authenticatorCode = code.Replace(" ", string.Empty).Replace("-", string.Empty);
+        if (await _userManager.VerifyTwoFactorTokenAsync(
+                user, _userManager.Options.Tokens.AuthenticatorTokenProvider, authenticatorCode))
+            return true;
+
+        var result = await _userManager.RedeemTwoFactorRecoveryCodeAsync(user, code.Trim());
+        return result.Succeeded;
+    }
+
     public async Task<bool> DisableTwoFactorAsync(ApplicationUser? user)
     {
         if (user == null) return false;
@@ -394,6 +417,14 @@ public class UserManagementService
 
         await _userManager.SetTwoFactorEnabledAsync(user, false);
         await _userManager.ResetAuthenticatorKeyAsync(user);
+
+        // This is the lost-device path, so passkeys go too.
+        var passkeys = await _userManager.GetPasskeysAsync(user);
+        foreach (var passkey in passkeys)
+            await _userManager.RemovePasskeyAsync(user, passkey.CredentialId);
+
+        _audit.Log(SecurityEvent.TwoFactorReset, userId: user.Id,
+            detail: passkeys.Count > 0 ? $"removed {passkeys.Count} passkey(s)" : null);
         return true;
     }
 

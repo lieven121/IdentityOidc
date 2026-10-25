@@ -1,8 +1,26 @@
 <script setup lang="ts">
 import type TwoFactorAuth from './TwoFactorAuth.vue'
-import { UsersClient, TwoFactorSetupDto, RecoveryCodesDto } from '@/resources/api-clients/identity-api-client'
+import { UsersClient, TwoFactorSetupDto, RecoveryCodesDto, TwoFactorCodeDto } from '@/resources/api-clients/identity-api-client'
+import { useUserStore } from '@/stores/user'
+import { followReturnUrl } from '@/utils/safe-redirect'
 
 const usersClient = new UsersClient()
+const userStore = useUserStore()
+
+const setupRequired = computed(() => userStore.user?.requiresTwoFactorSetup === true)
+
+// Called after any change to the user's factors. Once an enforced setup is complete, continue
+// where the user was going (typically an OIDC authorize request).
+const handleFactorsChanged = async () => {
+  const wasRequired = setupRequired.value
+  await userStore.loadUser()
+  if (wasRequired && !setupRequired.value) followReturnUrl()
+}
+
+const handleRecoveryCodesVisible = async (visible: boolean) => {
+  showRecoveryCodesDialog.value = visible
+  if (!visible) await handleFactorsChanged()
+}
 
 const twoFactorSetup = ref<TwoFactorSetupDto | null>(null)
 const show2faSetupDialog = ref(false)
@@ -29,9 +47,9 @@ const handleConfirmEnable2fa = (data: RecoveryCodesDto) => {
   }
 }
 
-const handleGenerateRecoveryCodes = async () => {
+const handleGenerateRecoveryCodes = async (code: string) => {
   try {
-    recoveryCodesData.value = await usersClient.generateRecoveryCodes()
+    recoveryCodesData.value = await usersClient.generateRecoveryCodes(new TwoFactorCodeDto({ code }))
     showRecoveryCodesDialog.value = true
   } catch (error) {
     console.error('Failed to generate recovery codes:', error)
@@ -55,6 +73,15 @@ const handleGenerateRecoveryCodes = async () => {
           Manage your account security, password, active sessions, and two-factor authentication.
         </p>
 
+        <Message
+          v-if="setupRequired"
+          severity="warn"
+          icon="fa-duotone fa-shield-exclamation"
+          class="setup-required"
+        >
+          Your account requires two-factor authentication. Enable an authenticator app or add a passkey to continue.
+        </Message>
+
         <Divider />
 
         <!-- Password Section -->
@@ -67,7 +94,13 @@ const handleGenerateRecoveryCodes = async () => {
           ref="twoFactorAuthRef"
           @enable2fa="handleEnable2fa"
           @generate-codes="handleGenerateRecoveryCodes"
+          @disable2fa="handleFactorsChanged"
         />
+
+        <Divider />
+
+        <!-- Passkeys -->
+        <PasskeyList @changed="handleFactorsChanged" />
       </div>
     </template>
   </Card>
@@ -84,7 +117,7 @@ const handleGenerateRecoveryCodes = async () => {
   <RecoveryCodesDialog
     :visible="showRecoveryCodesDialog"
     :recovery-codes-data="recoveryCodesData"
-    @update:visible="(val) => (showRecoveryCodesDialog = val)"
+    @update:visible="handleRecoveryCodesVisible"
   />
 </template>
 
@@ -102,5 +135,9 @@ const handleGenerateRecoveryCodes = async () => {
   display: flex;
   flex-direction: column;
   gap: 0;
+}
+
+.setup-required {
+  margin-top: 1rem;
 }
 </style>

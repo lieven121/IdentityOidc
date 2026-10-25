@@ -26,11 +26,21 @@ onMounted(() => {
     options.value.message = params.message;
     options.value.confirm = params.confirm;
     options.value.cancel = params.cancel;
+    options.value.input = params.input;
   }
 })
 
+const inputValue = ref('');
+const confirmDisabled = computed(() => !!options.value.input && !inputValue.value.trim());
+
 function confirm() {
-  dialogRef?.value.close(true);
+  if (confirmDisabled.value) return;
+  if (!options.value.input) {
+    dialogRef?.value.close(true);
+    return;
+  }
+  // Passwords may legitimately start or end with spaces.
+  dialogRef?.value.close(options.value.input.type === 'password' ? inputValue.value : inputValue.value.trim());
 }
 
 function cancel() {
@@ -43,6 +53,21 @@ function cancel() {
     <div>
       <h2 class="confirm-title">{{ options.title }}</h2>
       <p class="confirm-message">{{ options.message }}</p>
+      <div
+        v-if="options.input"
+        class="confirm-input"
+      >
+        <label for="ConfirmDialogInput">{{ options.input.label }}</label>
+        <InputText
+          id="ConfirmDialogInput"
+          v-model="inputValue"
+          :type="options.input.type ?? 'text'"
+          :placeholder="options.input.placeholder"
+          :autocomplete="options.input.autocomplete ?? 'off'"
+          autofocus
+          @keydown.enter="confirm"
+        />
+      </div>
     </div>
     <div class="actions">
       <Button
@@ -54,6 +79,7 @@ function cancel() {
       <Button
         :label="options.confirm.text"
         :severity="options.confirm.severity"
+        :disabled="confirmDisabled"
         @click="confirm"
       />
     </div>
@@ -61,6 +87,13 @@ function cancel() {
 </template>
 
 <style lang="scss" scoped>
+.confirm-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
 .actions {
   display: flex;
   justify-content: flex-end;

@@ -1,9 +1,12 @@
 ﻿using Identity.App.Data;
 using Identity.App.Extensions;
+using Identity.App.Hosting;
+using Identity.App.Services;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
@@ -32,6 +35,7 @@ public static class OpenIdConnectEndpoints
         group.MapPost("/token", (Delegate)TokenHandler)
             .WithName("Token")
             .AllowAnonymous()
+            .RequireRateLimiting(RateLimitingConfig.TokenPolicy)
             .DisableAntiforgery();
 
         group.MapGet("/userinfo", UserInfoHandler)
@@ -59,104 +63,65 @@ public static class OpenIdConnectEndpoints
            SignInManager<ApplicationUser> signInManager,
            UserManager<ApplicationUser> userManager,
            IOpenIddictScopeManager scopeManager,
-           IOpenIddictApplicationManager applicationManager
+           IOpenIddictApplicationManager applicationManager,
+           TwoFactorPolicy twoFactorPolicy,
+           SecurityAudit audit
            )
     {
         var user = httpContext.User;
-        var request = httpContext.GetOpenIddictServerRequest();
+        var request = httpContext.GetOpenIddictServerRequest() ??
+            throw new InvalidOperationException("The OpenID Connect request cannot be retrieved.");
 
-        if (request.IsAuthorizationCodeGrantType() || request.IsRefreshTokenGrantType())
-        {
-            var result = await httpContext.AuthenticateAsync(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
-            if (result.Succeeded)
-            {
-                var tokenPrincipal = result.Principal;
-                return Results.SignIn(tokenPrincipal, authenticationScheme: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
-            }
-        }
-
+        // Only an authenticated cookie session may obtain an authorization code here. Do not
+        // authenticate against the OpenIddict scheme: at this endpoint that returns the principal
+        // from a caller-supplied id_token_hint, which would issue codes without a login.
         if (user.Identity?.IsAuthenticated != true)
             return Results.Challenge();
 
-        var appUser = await userManager.GetUserAsync(user) ??
-                   throw new Exception();
+        var appUser = await userManager.GetUserAsync(user);
+        if (appUser is null)
+            return Results.Challenge();
 
-        // Check if application has required roles stored in database
-        var application = await applicationManager.FindByClientIdAsync(request.ClientId);
-        if (application != null)
+        // Users who must use 2FA but haven't set it up are sent to the security page; it returns
+        // to this authorize request once TOTP or a passkey is in place.
+        if (await twoFactorPolicy.NeedsSetupAsync(appUser))
         {
-            var properties = await applicationManager.GetPropertiesAsync(application);
-            
-            if (properties.TryGetValue("RequiredRoles", out var rolesElement))
-            {
-                List<string>? requiredRoles = null;
-                
-                if (rolesElement is System.Text.Json.JsonElement jsonElement && 
-                    jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                {
-                    requiredRoles = jsonElement.EnumerateArray()
-                        .Where(e => e.ValueKind == System.Text.Json.JsonValueKind.String)
-                        .Select(e => e.GetString() ?? "")
-                        .Where(s => !string.IsNullOrWhiteSpace(s))
-                        .ToList();
-                }
-
-                if (requiredRoles != null && requiredRoles.Any())
-                {
-                    var userRoles = await userManager.GetRolesAsync(appUser);
-                    var hasRequiredRole = requiredRoles.Any(requiredRole => 
-                        userRoles.Contains(requiredRole, StringComparer.OrdinalIgnoreCase));
-
-                    if (!hasRequiredRole)
-                    {
-                        return Results.Forbid(
-                            authenticationSchemes: new[] { OpenIddictServerAspNetCoreDefaults.AuthenticationScheme },
-                            properties: new Microsoft.AspNetCore.Authentication.AuthenticationProperties(
-                                new Dictionary<string, string>
-                                {
-                                    [OpenIddictServerAspNetCoreConstants.Properties.Error] = OpenIddictConstants.Errors.AccessDenied,
-                                    [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] = 
-                                        $"User does not have required role(s): {string.Join(", ", requiredRoles)}"
-                                }));
-                    }
-                }
-            }
+            audit.Log(SecurityEvent.AuthorizationDenied, success: false, userId: appUser.Id, clientId: request.ClientId,
+                detail: "two-factor setup required");
+            var returnUrl = httpContext.Request.PathBase + httpContext.Request.Path + httpContext.Request.QueryString;
+            return Results.Redirect($"{httpContext.Request.PathBase}/account/security?setup=required&ReturnUrl={Uri.EscapeDataString(returnUrl)}");
         }
 
-        var claims = new List<Claim>
-            {
-                new Claim(Claims.Subject, user.Identity.Name)
-            };
-
-        var identity = new ClaimsIdentity(claims, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
-
-        var principal = await signInManager.CreateUserPrincipalAsync(appUser);
-
-        var emailClaim = principal.Claims.FirstOrDefault(x => x.Type.Equals(ClaimTypes.Email));
-        if (emailClaim != null)
+        var missingRolesError = await GetMissingRequiredRolesErrorAsync(applicationManager, userManager, request.ClientId, appUser);
+        if (missingRolesError != null)
         {
-            var existing = principal.Claims.FirstOrDefault(c => c.Type == Claims.Email);
-            if (existing != null)
-                principal.SetClaim(Claims.Email, emailClaim.Value);
-            else 
-                principal.AddClaim(Claims.Email, emailClaim.Value);
+            audit.Log(SecurityEvent.AuthorizationDenied, success: false, userId: appUser.Id, clientId: request.ClientId,
+                detail: missingRolesError);
+            return ForbidWithError(Errors.AccessDenied, missingRolesError);
         }
 
         var scopes = request.GetScopes();
-        principal.SetScopes(scopes);
-        principal.SetResources(await scopeManager.ListResourcesAsync(scopes).ToListAsync());
+        var principal = await CreatePrincipalAsync(
+            signInManager, appUser, scopes, await scopeManager.ListResourcesAsync(scopes).ToListAsync());
 
-        foreach (var claim in principal.Claims)
-        {
-            claim.SetDestinations(GetDestinations(claim, principal));
-        }
+        audit.Log(SecurityEvent.AuthorizationGranted, userId: appUser.Id, clientId: request.ClientId,
+            detail: $"scopes '{string.Join(' ', scopes)}'");
 
         return Results.SignIn(principal, authenticationScheme: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
     }
 
-    private static async Task<IResult> TokenHandler(HttpContext httpContext, IOpenIddictApplicationManager applicationManager, IOpenIddictScopeManager scopeManager)
+    private static async Task<IResult> TokenHandler(
+        HttpContext httpContext,
+        IOpenIddictApplicationManager applicationManager,
+        IOpenIddictScopeManager scopeManager,
+        SignInManager<ApplicationUser> signInManager,
+        UserManager<ApplicationUser> userManager,
+        IOptions<IdentityOptions> identityOptions,
+        TwoFactorPolicy twoFactorPolicy,
+        SecurityAudit audit)
     {
-        var request = httpContext.GetOpenIddictServerRequest();
+        var request = httpContext.GetOpenIddictServerRequest() ??
+            throw new InvalidOperationException("The OpenID Connect request cannot be retrieved.");
         var result = await httpContext.AuthenticateAsync(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
         var principal = result.Principal;
 
@@ -195,12 +160,62 @@ public static class OpenIdConnectEndpoints
             });
 
             principal = new ClaimsPrincipal(identity);
+
+            audit.Log(SecurityEvent.TokenIssued, clientId: request.ClientId,
+                detail: $"client_credentials, scopes '{string.Join(' ', identity.GetScopes())}'");
         }
-        else if(
-            !(
-            request.IsAuthorizationCodeGrantType() ||
-            request.IsRefreshTokenGrantType()
-            ))
+        else if (request.IsAuthorizationCodeGrantType() || request.IsRefreshTokenGrantType())
+        {
+            var grantType = request.GrantType;
+
+            // Re-validate the user on every code redemption and refresh, so deleted, locked out,
+            // re-credentialed or de-roled users stop receiving tokens.
+            var userId = principal?.GetClaim(Claims.Subject);
+            var appUser = string.IsNullOrEmpty(userId) ? null : await userManager.FindByIdAsync(userId);
+            if (principal is null || appUser is null ||
+                !await signInManager.CanSignInAsync(appUser) ||
+                await userManager.IsLockedOutAsync(appUser))
+            {
+                audit.Log(SecurityEvent.TokenRefreshDenied, success: false, userId: userId, clientId: request.ClientId,
+                    detail: $"{grantType}: user missing, not allowed to sign in or locked out");
+                return ForbidWithError(Errors.InvalidGrant, "The token is no longer valid.");
+            }
+
+            // The security stamp changes on password reset, 2FA reset, etc.
+            var tokenStamp = principal.GetClaim(identityOptions.Value.ClaimsIdentity.SecurityStampClaimType);
+            if (tokenStamp != null && userManager.SupportsUserSecurityStamp &&
+                tokenStamp != await userManager.GetSecurityStampAsync(appUser))
+            {
+                audit.Log(SecurityEvent.TokenRefreshDenied, success: false, userId: userId, clientId: request.ClientId,
+                    detail: $"{grantType}: security stamp changed");
+                return ForbidWithError(Errors.InvalidGrant, "The token is no longer valid.");
+            }
+
+            var missingRolesError = await GetMissingRequiredRolesErrorAsync(applicationManager, userManager, request.ClientId, appUser);
+            if (missingRolesError != null)
+            {
+                audit.Log(SecurityEvent.TokenRefreshDenied, success: false, userId: userId, clientId: request.ClientId,
+                    detail: $"{grantType}: {missingRolesError}");
+                return ForbidWithError(Errors.InvalidGrant, missingRolesError);
+            }
+
+            // Covers enforcement switched on after tokens were issued: the client has to go back
+            // through authorize, which sends the user to set up 2FA.
+            if (await twoFactorPolicy.NeedsSetupAsync(appUser))
+            {
+                audit.Log(SecurityEvent.TokenRefreshDenied, success: false, userId: userId, clientId: request.ClientId,
+                    detail: $"{grantType}: two-factor setup required");
+                return ForbidWithError(Errors.InvalidGrant, "Two-factor authentication must be set up before continuing.");
+            }
+
+            // Rebuild from the current user so role/claim changes are reflected.
+            principal = await CreatePrincipalAsync(signInManager, appUser, principal.GetScopes(), principal.GetResources());
+
+            // Refreshes are routine and frequent; only the initial code redemption is audited.
+            if (request.IsAuthorizationCodeGrantType())
+                audit.Log(SecurityEvent.TokenIssued, userId: userId, clientId: request.ClientId, detail: grantType);
+        }
+        else
         {
             principal = null;
         }
@@ -229,6 +244,9 @@ public static class OpenIdConnectEndpoints
             return Results.Unauthorized();
 
         var applicationUser = await userManager.GetUserAsync(principal);
+        if (applicationUser is null)
+            return Results.Unauthorized();
+
         var claims = new Dictionary<string, object>(StringComparer.Ordinal)
         {
             // Note: the "sub" claim is a mandatory claim and must be included in the JSON response.
@@ -263,6 +281,79 @@ public static class OpenIdConnectEndpoints
                 OpenIddictServerAspNetCoreDefaults.AuthenticationScheme
             });
     }
+
+    private static async Task<ClaimsPrincipal> CreatePrincipalAsync(
+        SignInManager<ApplicationUser> signInManager,
+        ApplicationUser appUser,
+        IEnumerable<string> scopes,
+        IEnumerable<string> resources)
+    {
+        var principal = await signInManager.CreateUserPrincipalAsync(appUser);
+
+        var emailClaim = principal.Claims.FirstOrDefault(x => x.Type.Equals(ClaimTypes.Email));
+        if (emailClaim != null)
+        {
+            var existing = principal.Claims.FirstOrDefault(c => c.Type == Claims.Email);
+            if (existing != null)
+                principal.SetClaim(Claims.Email, emailClaim.Value);
+            else
+                principal.AddClaim(Claims.Email, emailClaim.Value);
+        }
+
+        principal.SetScopes(scopes);
+        principal.SetResources(resources);
+
+        foreach (var claim in principal.Claims)
+        {
+            claim.SetDestinations(GetDestinations(claim, principal));
+        }
+
+        return principal;
+    }
+
+    // Returns an error description when the application requires roles the user doesn't have.
+    private static async Task<string?> GetMissingRequiredRolesErrorAsync(
+        IOpenIddictApplicationManager applicationManager,
+        UserManager<ApplicationUser> userManager,
+        string? clientId,
+        ApplicationUser appUser)
+    {
+        if (string.IsNullOrEmpty(clientId))
+            return null;
+
+        var application = await applicationManager.FindByClientIdAsync(clientId);
+        if (application == null)
+            return null;
+
+        var properties = await applicationManager.GetPropertiesAsync(application);
+        if (!properties.TryGetValue("RequiredRoles", out var rolesElement) ||
+            rolesElement.ValueKind != System.Text.Json.JsonValueKind.Array)
+            return null;
+
+        var requiredRoles = rolesElement.EnumerateArray()
+            .Where(e => e.ValueKind == System.Text.Json.JsonValueKind.String)
+            .Select(e => e.GetString() ?? "")
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .ToList();
+
+        if (!requiredRoles.Any())
+            return null;
+
+        var userRoles = await userManager.GetRolesAsync(appUser);
+        var hasRequiredRole = requiredRoles.Any(requiredRole =>
+            userRoles.Contains(requiredRole, StringComparer.OrdinalIgnoreCase));
+
+        return hasRequiredRole ? null : $"User does not have required role(s): {string.Join(", ", requiredRoles)}";
+    }
+
+    private static IResult ForbidWithError(string error, string description) =>
+        Results.Forbid(
+            authenticationSchemes: new[] { OpenIddictServerAspNetCoreDefaults.AuthenticationScheme },
+            properties: new AuthenticationProperties(new Dictionary<string, string?>
+            {
+                [OpenIddictServerAspNetCoreConstants.Properties.Error] = error,
+                [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] = description
+            }));
 
     private static IEnumerable<string> GetDestinations(Claim claim, ClaimsPrincipal principal)
     {

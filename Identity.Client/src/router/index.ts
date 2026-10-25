@@ -27,7 +27,7 @@ const router = createRouter({
       beforeEnter: (to, from, next) => {
         const userStore = useUserStore()
         if (userStore.isAuthenticated) next()
-        else next('/login?ReturnUrl=' + to.fullPath)
+        else next('/login?ReturnUrl=' + encodeURIComponent(to.fullPath))
       },
       children: [
         {
@@ -75,7 +75,14 @@ router.beforeEach(async (to, from, next) => {
   }
   const userStore = useUserStore()
   await userStore.loadUser()
-  if (to.meta.requiresAdmin && !userStore.isAdmin) {
+  // Users who must use 2FA can only reach the security page until it is set up.
+  const exempt: (string | symbol | undefined | null)[] = [RouteNames.Security, RouteNames.Logout, RouteNames.Login]
+  if (userStore.user?.requiresTwoFactorSetup && !exempt.includes(to.name)) {
+    next({
+      name: RouteNames.Security,
+      query: { setup: 'required', ...(to.query.ReturnUrl ? { ReturnUrl: to.query.ReturnUrl } : {}) },
+    })
+  } else if (to.meta.requiresAdmin && !userStore.isAdmin) {
     next({ name: RouteNames.AccountInfo })
   } else {
     next()

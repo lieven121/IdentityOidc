@@ -1,6 +1,7 @@
 ﻿
 
 using Identity.App.Data;
+using Identity.App.Helpers;
 using Identity.App.Models;
 using Identity.App.Models.Consts;
 using Microsoft.AspNetCore.Identity;
@@ -12,7 +13,11 @@ using static OpenIddict.Abstractions.OpenIddictConstants;
 namespace Identity.App.Workers;
 
 [RegisterHostedService]
-public class OpenIddictWorker(IServiceProvider serviceProvider, IConfiguration configuration) : IHostedService
+public class OpenIddictWorker(
+    IServiceProvider serviceProvider,
+    IConfiguration configuration,
+    IHostEnvironment environment,
+    ILogger<OpenIddictWorker> logger) : IHostedService
 {
     public async Task StartAsync(CancellationToken cancellationToken)
     {
@@ -40,11 +45,11 @@ public class OpenIddictWorker(IServiceProvider serviceProvider, IConfiguration c
                 var result = await roleManager.CreateAsync(new IdentityRole(roleName));
                 if (result.Succeeded)
                 {
-                    Console.WriteLine($"Created role: {roleName}");
+                    logger.LogInformation("Created role {Role}", roleName);
                 }
                 else
                 {
-                    Console.Error.WriteLine($"Failed to create role {roleName}: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+                    logger.LogError("Failed to create role {Role}: {Errors}", roleName, string.Join(", ", result.Errors.Select(e => e.Description)));
                 }
             }
         }
@@ -124,7 +129,9 @@ public class OpenIddictWorker(IServiceProvider serviceProvider, IConfiguration c
                 //app.Permissions.Remove(Permissions.GrantTypes.AuthorizationCode);
             }
 
-            if(applicationConfig.PKCE)
+            // Public clients can't authenticate at the token endpoint, so PKCE is their only
+            // protection against authorization code interception.
+            if(applicationConfig.PKCE || app.ClientType == ClientTypes.Public)
             {
                 app.Requirements.Add(Requirements.Features.ProofKeyForCodeExchange);
             } else {
@@ -171,7 +178,8 @@ public class OpenIddictWorker(IServiceProvider serviceProvider, IConfiguration c
                 continue;
 
             var user = await userManager.FindByEmailAsync(userConfig.Email);
-            
+            var initialPasswordFile = GetInitialPasswordFilePath(userConfig.Email);
+
             if (user == null)
             {
                 user = new ApplicationUser
@@ -180,17 +188,45 @@ public class OpenIddictWorker(IServiceProvider serviceProvider, IConfiguration c
                     Email = userConfig.Email,
                     EmailConfirmed = true
                 };
-                
-                if (string.IsNullOrWhiteSpace(userConfig.Password))
+
+                var generatePassword = string.IsNullOrWhiteSpace(userConfig.Password);
+                if (generatePassword)
+                    userConfig.Password = PasswordGenerator.QuicklyGeneratePassword(20, 28);
+
+                var createResult = await userManager.CreateAsync(user, userConfig.Password);
+                if (!createResult.Succeeded)
                 {
-                    userConfig.Password = Guid.NewGuid().ToString();
-                    //add 3 random upper case letters
-                    userConfig.Password += new string(Enumerable.Range(0, 3).Select(_ => (char)Random.Shared.Next('A', 'Z')).ToArray());
-                    Console.WriteLine($"Creating user {userConfig.Email} with password '{userConfig.Password}'");
+                    logger.LogError("Failed to create user {Email}: {Errors}", userConfig.Email, string.Join(", ", createResult.Errors.Select(e => e.Description)));
+                    continue;
                 }
-                
-                await userManager.CreateAsync(user, userConfig.Password);
-                Console.WriteLine($"Created user {userConfig.Email}");
+                logger.LogInformation("Created user {Email}", userConfig.Email);
+
+                // Never log a generated password: logs are long-lived and widely readable.
+                if (generatePassword)
+                {
+                    WriteInitialPasswordFile(initialPasswordFile, userConfig.Email, userConfig.Password);
+                    logger.LogWarning("Generated password for {Email} written to {Path}. Sign in, change the password and delete the file.",
+                        userConfig.Email, initialPasswordFile);
+                }
+            }
+            else
+            {
+                if (!string.IsNullOrWhiteSpace(userConfig.Password))
+                {
+                    var resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
+                    var passwordResult = await userManager.ResetPasswordAsync(user, resetToken, userConfig.Password);
+                    if (passwordResult.Succeeded)
+                    {
+                        logger.LogInformation("Updated password for user {Email}", userConfig.Email);
+                    }
+                    else
+                    {
+                        logger.LogError("Failed to update password for user {Email}: {Errors}", userConfig.Email, string.Join(", ", passwordResult.Errors.Select(e => e.Description)));
+                    }
+                }
+
+                if (File.Exists(initialPasswordFile))
+                    logger.LogWarning("Initial password file {Path} still exists. Delete it once the password has been changed.", initialPasswordFile);
             }
 
             // Get desired roles from configuration
@@ -218,18 +254,18 @@ public class OpenIddictWorker(IServiceProvider serviceProvider, IConfiguration c
                     // Ensure role exists
                     if (!await roleManager.RoleExistsAsync(role))
                     {
-                        Console.WriteLine($"Warning: Role '{role}' does not exist. Skipping assignment to user {userConfig.Email}");
+                        logger.LogWarning("Role {Role} does not exist. Skipping assignment to user {Email}", role, userConfig.Email);
                         continue;
                     }
                     
                     var result = await userManager.AddToRoleAsync(user, role);
                     if (result.Succeeded)
                     {
-                        Console.WriteLine($"Added user {userConfig.Email} to role: {role}");
+                        logger.LogInformation("Added user {Email} to role {Role}", userConfig.Email, role);
                     }
                     else
                     {
-                        Console.Error.WriteLine($"Failed to add user {userConfig.Email} to role {role}: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+                        logger.LogError("Failed to add user {Email} to role {Role}: {Errors}", userConfig.Email, role, string.Join(", ", result.Errors.Select(e => e.Description)));
                     }
                 }
             }
@@ -242,17 +278,44 @@ public class OpenIddictWorker(IServiceProvider serviceProvider, IConfiguration c
                     var result = await userManager.RemoveFromRoleAsync(user, role);
                     if (result.Succeeded)
                     {
-                        Console.WriteLine($"Removed user {userConfig.Email} from role: {role}");
+                        logger.LogInformation("Removed user {Email} from role {Role}", userConfig.Email, role);
                     }
                     else
                     {
-                        Console.Error.WriteLine($"Failed to remove user {userConfig.Email} from role {role}: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+                        logger.LogError("Failed to remove user {Email} from role {Role}: {Errors}", userConfig.Email, role, string.Join(", ", result.Errors.Select(e => e.Description)));
                     }
                 }
             }
         }
     }
 
+
+    // OpenIddict:InitialPasswordDirectory, defaulting to the content root. Point it at a mounted
+    // volume in containers so the file survives until it is read.
+    private string GetInitialPasswordFilePath(string email)
+    {
+        var directory = configuration["OpenIddict:InitialPasswordDirectory"];
+        if (string.IsNullOrWhiteSpace(directory))
+            directory = environment.ContentRootPath;
+
+        var safeName = string.Concat(email.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c));
+        return Path.GetFullPath(Path.Combine(directory, $"initial-password-{safeName}.txt"));
+    }
+
+    private static void WriteInitialPasswordFile(string path, string email, string password)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+
+        var options = new FileStreamOptions { Mode = FileMode.Create, Access = FileAccess.Write };
+        if (!OperatingSystem.IsWindows())
+            options.UnixCreateMode = UnixFileMode.UserRead | UnixFileMode.UserWrite;
+
+        using var writer = new StreamWriter(path, options);
+        writer.WriteLine($"Initial password for {email}:");
+        writer.WriteLine(password);
+        writer.WriteLine();
+        writer.WriteLine("Sign in, change this password, then delete this file.");
+    }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }

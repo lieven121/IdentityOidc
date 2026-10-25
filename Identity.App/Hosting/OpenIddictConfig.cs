@@ -47,6 +47,10 @@ public static class OpenIddictConfig
                 //});
 
 
+                // Without a fixed issuer it is derived from the (client-controlled) Host header.
+                if (!string.IsNullOrWhiteSpace(openIddictSettings?.Issuer))
+                    options.SetIssuer(new Uri(openIddictSettings.Issuer));
+
                 options
                     .SetAuthorizationEndpointUris("/connect/authorize")
                     .SetTokenEndpointUris("/connect/token")
@@ -95,7 +99,7 @@ public static class OpenIddictConfig
                         throw new FileNotFoundException($"Certificate not found at {path}");
                     }
 
-                    var cert = X509CertificateLoader.LoadPkcs12FromFile(path, openIddictSettings.Signing.Cert.Password);
+                    var cert = X509CertificateLoader.LoadPkcs12FromFile(path, openIddictSettings.Encryption.Cert.Password);
                     options.AddEncryptionCertificate(cert);
                 }
 

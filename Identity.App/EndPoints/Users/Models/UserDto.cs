@@ -6,5 +6,6 @@
         public string Username { get; set; }
         public string Email { get; set; }
         public bool TwoFactorEnabled { get; set; }
+        public bool RequiresTwoFactorSetup { get; set; }
     }
 }

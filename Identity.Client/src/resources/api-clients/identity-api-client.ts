@@ -390,13 +390,17 @@ export class UsersClient extends ClientBase {
         return Promise.resolve<RecoveryCodesDto | null>(null as any);
     }
 
-    disable2fa(): Promise<void> {
+    disable2fa(twoFactorCodeDto: TwoFactorCodeDto): Promise<void> {
         let url_ = this.baseUrl + "/api/users/me/2fa/disable";
         url_ = url_.replace(/[?&]$/, "");
 
+        const content_ = JSON.stringify(twoFactorCodeDto);
+
         let options_: RequestInit = {
+            body: content_,
             method: "POST",
             headers: {
+                "Content-Type": "application/json",
             }
         };
 
@@ -416,7 +420,11 @@ export class UsersClient extends ClientBase {
             });
         } else if (status === 400) {
             return response.text().then((_responseText) => {
-            return throwException("A server side error occurred.", status, _responseText, _headers);
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result400 = resultData400 !== undefined ? resultData400 : null as any;
+    
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -426,13 +434,17 @@ export class UsersClient extends ClientBase {
         return Promise.resolve<void>(null as any);
     }
 
-    generateRecoveryCodes(): Promise<RecoveryCodesDto | null> {
+    generateRecoveryCodes(twoFactorCodeDto: TwoFactorCodeDto): Promise<RecoveryCodesDto | null> {
         let url_ = this.baseUrl + "/api/users/me/2fa/recovery-codes";
         url_ = url_.replace(/[?&]$/, "");
 
+        const content_ = JSON.stringify(twoFactorCodeDto);
+
         let options_: RequestInit = {
+            body: content_,
             method: "POST",
             headers: {
+                "Content-Type": "application/json",
                 "Accept": "application/json"
             }
         };
@@ -464,6 +476,184 @@ export class UsersClient extends ClientBase {
             });
         }
         return Promise.resolve<RecoveryCodesDto | null>(null as any);
+    }
+
+    getPasskeys(): Promise<PasskeyDto[] | null> {
+        let url_ = this.baseUrl + "/api/users/me/passkeys";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processGetPasskeys(_response));
+        });
+    }
+
+    protected processGetPasskeys(response: Response): Promise<PasskeyDto[] | null> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(PasskeyDto.fromJS(item));
+            }
+            else {
+                result200 = null as any;
+            }
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<PasskeyDto[] | null>(null as any);
+    }
+
+    addPasskey(dto: AddPasskeyDto): Promise<PasskeyDto | null> {
+        let url_ = this.baseUrl + "/api/users/me/passkeys";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(dto);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processAddPasskey(_response));
+        });
+    }
+
+    protected processAddPasskey(response: Response): Promise<PasskeyDto | null> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = resultData200 ? PasskeyDto.fromJS(resultData200) : null as any;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<PasskeyDto | null>(null as any);
+    }
+
+    passkeyCreationOptions(dto: PasskeyCreationOptionsRequestDto): Promise<PasskeyOptionsDto | null> {
+        let url_ = this.baseUrl + "/api/users/me/passkeys/creation-options";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(dto);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processPasskeyCreationOptions(_response));
+        });
+    }
+
+    protected processPasskeyCreationOptions(response: Response): Promise<PasskeyOptionsDto | null> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = resultData200 ? PasskeyOptionsDto.fromJS(resultData200) : null as any;
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<PasskeyOptionsDto | null>(null as any);
+    }
+
+    removePasskey(id: string): Promise<void> {
+        let url_ = this.baseUrl + "/api/users/me/passkeys/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "DELETE",
+            headers: {
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processRemovePasskey(_response));
+        });
+    }
+
+    protected processRemovePasskey(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result400 = resultData400 !== undefined ? resultData400 : null as any;
+    
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            return throwException("A server side error occurred.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
     }
 }
 
@@ -1754,6 +1944,83 @@ export class IdentityClient extends ClientBase {
         return Promise.resolve<void>(null as any);
     }
 
+    passkeyRequestOptions(): Promise<PasskeyOptionsDto | null> {
+        let url_ = this.baseUrl + "/api/passkey/request-options";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "POST",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processPasskeyRequestOptions(_response));
+        });
+    }
+
+    protected processPasskeyRequestOptions(response: Response): Promise<PasskeyOptionsDto | null> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = resultData200 ? PasskeyOptionsDto.fromJS(resultData200) : null as any;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<PasskeyOptionsDto | null>(null as any);
+    }
+
+    passkeyLogin(dto: PasskeyCredentialDto): Promise<string | null> {
+        let url_ = this.baseUrl + "/api/passkey/login";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(dto);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.transformResult(url_, _response, (_response: Response) => this.processPasskeyLogin(_response));
+        });
+    }
+
+    protected processPasskeyLogin(response: Response): Promise<string | null> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : null as any;
+    
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<string | null>(null as any);
+    }
+
     logout(): Promise<void> {
         let url_ = this.baseUrl + "/api/logout";
         url_ = url_.replace(/[?&]$/, "");
@@ -1987,6 +2254,7 @@ export class UserDto implements IUserDto {
     username?: string;
     email?: string;
     twoFactorEnabled?: boolean;
+    requiresTwoFactorSetup?: boolean;
 
     constructor(data?: IUserDto) {
         if (data) {
@@ -2003,6 +2271,7 @@ export class UserDto implements IUserDto {
             this.username = _data["username"];
             this.email = _data["email"];
             this.twoFactorEnabled = _data["twoFactorEnabled"];
+            this.requiresTwoFactorSetup = _data["requiresTwoFactorSetup"];
         }
     }
 
@@ -2019,6 +2288,7 @@ export class UserDto implements IUserDto {
         data["username"] = this.username;
         data["email"] = this.email;
         data["twoFactorEnabled"] = this.twoFactorEnabled;
+        data["requiresTwoFactorSetup"] = this.requiresTwoFactorSetup;
         return data;
     }
 }
@@ -2028,6 +2298,7 @@ export interface IUserDto {
     username?: string;
     email?: string;
     twoFactorEnabled?: boolean;
+    requiresTwoFactorSetup?: boolean;
 }
 
 export class UpdateUserDto implements IUpdateUserDto {
@@ -2268,6 +2539,202 @@ export class Enable2faDto implements IEnable2faDto {
 
 export interface IEnable2faDto {
     code?: string;
+}
+
+export class TwoFactorCodeDto implements ITwoFactorCodeDto {
+    code?: string;
+
+    constructor(data?: ITwoFactorCodeDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.code = _data["code"];
+        }
+    }
+
+    static fromJS(data: any): TwoFactorCodeDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new TwoFactorCodeDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["code"] = this.code;
+        return data;
+    }
+}
+
+export interface ITwoFactorCodeDto {
+    code?: string;
+}
+
+export class PasskeyDto implements IPasskeyDto {
+    id?: string;
+    name?: string | undefined;
+    createdAt?: Date;
+    isBackedUp?: boolean;
+
+    constructor(data?: IPasskeyDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.createdAt = _data["createdAt"] ? new Date(_data["createdAt"].toString()) : undefined as any;
+            this.isBackedUp = _data["isBackedUp"];
+        }
+    }
+
+    static fromJS(data: any): PasskeyDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new PasskeyDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["createdAt"] = this.createdAt ? this.createdAt.toISOString() : undefined as any;
+        data["isBackedUp"] = this.isBackedUp;
+        return data;
+    }
+}
+
+export interface IPasskeyDto {
+    id?: string;
+    name?: string | undefined;
+    createdAt?: Date;
+    isBackedUp?: boolean;
+}
+
+export class PasskeyOptionsDto implements IPasskeyOptionsDto {
+    optionsJson?: string;
+
+    constructor(data?: IPasskeyOptionsDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.optionsJson = _data["optionsJson"];
+        }
+    }
+
+    static fromJS(data: any): PasskeyOptionsDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new PasskeyOptionsDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["optionsJson"] = this.optionsJson;
+        return data;
+    }
+}
+
+export interface IPasskeyOptionsDto {
+    optionsJson?: string;
+}
+
+export class PasskeyCreationOptionsRequestDto implements IPasskeyCreationOptionsRequestDto {
+    currentPassword?: string;
+
+    constructor(data?: IPasskeyCreationOptionsRequestDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.currentPassword = _data["currentPassword"];
+        }
+    }
+
+    static fromJS(data: any): PasskeyCreationOptionsRequestDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new PasskeyCreationOptionsRequestDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["currentPassword"] = this.currentPassword;
+        return data;
+    }
+}
+
+export interface IPasskeyCreationOptionsRequestDto {
+    currentPassword?: string;
+}
+
+export class AddPasskeyDto implements IAddPasskeyDto {
+    credentialJson?: string;
+    name?: string | undefined;
+
+    constructor(data?: IAddPasskeyDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.credentialJson = _data["credentialJson"];
+            this.name = _data["name"];
+        }
+    }
+
+    static fromJS(data: any): AddPasskeyDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new AddPasskeyDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["credentialJson"] = this.credentialJson;
+        data["name"] = this.name;
+        return data;
+    }
+}
+
+export interface IAddPasskeyDto {
+    credentialJson?: string;
+    name?: string | undefined;
 }
 
 export class ResultPageOfUserDto implements IResultPageOfUserDto {
@@ -2630,6 +3097,42 @@ export interface ILoginRequest {
     twoFactorRecoveryCode?: string | undefined;
 }
 
+export class PasskeyCredentialDto implements IPasskeyCredentialDto {
+    credentialJson?: string;
+
+    constructor(data?: IPasskeyCredentialDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.credentialJson = _data["credentialJson"];
+        }
+    }
+
+    static fromJS(data: any): PasskeyCredentialDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new PasskeyCredentialDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["credentialJson"] = this.credentialJson;
+        return data;
+    }
+}
+
+export interface IPasskeyCredentialDto {
+    credentialJson?: string;
+}
+
 export class Claim implements IClaim {
     customSerializationData?: string | undefined;
     issuer?: string;
@@ -2829,7 +3332,7 @@ function throwException(message: string, status: number, response: string, heade
         throw new ApiException(message, status, response, headers, null);
 }
 
- 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /*
 // i mport { useAlertStore } from '@/stores/alert';

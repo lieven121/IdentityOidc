@@ -69,12 +69,12 @@ public static class SwaggerConfig
 
     public static IApplicationBuilder UseSwagger(this WebApplication app)
     {
-        app.UseOpenApi(config =>
-        {
-        });
-
+        // The spec maps every admin endpoint; only expose it in development (client generation uses it).
         if (app.Environment.IsDevelopment())
         {
+            app.UseOpenApi(config =>
+            {
+            });
             app.UseSwaggerUi();
             app.UseReDoc();
         }

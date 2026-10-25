@@ -29,6 +29,7 @@ declare module 'vue' {
     LabelInput: typeof import('./components/Common/LabelInput.vue')['default']
     LoginForm: typeof import('./components/Login/LoginForm.vue')['default']
     Message: typeof import('primevue/message')['default']
+    PasskeyList: typeof import('./components/Account/Security/PasskeyList.vue')['default']
     Password: typeof import('primevue/password')['default']
     ProgressSpinner: typeof import('primevue/progressspinner')['default']
     RecoveryCodesDialog: typeof import('./components/Account/Security/RecoveryCodesDialog.vue')['default']

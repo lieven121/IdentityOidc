@@ -3,6 +3,9 @@
 public class OpenIddictSettingsConfig
 {
     public bool OnlyAllowHttps { get; set; }
+    public string? Issuer { get; set; }
+    public bool EnforceTwoFactor { get; set; }
+    public IEnumerable<string>? EnforceTwoFactorRoles { get; set; }
     public EncryptionConfig Encryption { get; set; }
     public EncryptionConfig Signing { get; set; }
 

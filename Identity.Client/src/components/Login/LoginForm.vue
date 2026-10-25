@@ -2,11 +2,11 @@
 import {
   startAuthentication,
   browserSupportsWebAuthn,
-  startRegistration,
 } from '@simplewebauthn/browser'
 import type { ExternalLoginProvider } from './ExternalLoginProvider';
-import { ApiException, IdentityClient, LoginRequest } from '@/resources/api-clients/identity-api-client';
+import { ApiException, IdentityClient, LoginRequest, PasskeyCredentialDto } from '@/resources/api-clients/identity-api-client';
 import { RouteNames } from '@/router/routes';
+import { followReturnUrl } from '@/utils/safe-redirect';
 
 
 const props = withDefaults(defineProps<{
@@ -27,7 +27,6 @@ const props = withDefaults(defineProps<{
 });
 
 const router = useRouter()
-const networkStore = useNetworkStore()
 
 const identityClient = new IdentityClient();
 
@@ -147,36 +146,30 @@ function showOtpInput() {
   }, 100)
 }
 
-async function loginWithPasskey(register = false) {
+const passkeyError = ref(false)
+
+async function loginWithPasskey() {
   try {
     loggingIn.value = true
+    passkeyError.value = false
     if (!browserSupportsWebAuthn()) {
       console.log('WebAuthn not supported')
       return
     }
 
-    const data = await networkStore.fetchData('/api/fido/credential-options', {
-      method: 'POST',
-      body: {
-        username: username.value,
-        password: '',
-      },
-    })
-    // const options = useFetch('/fido/credential-options', {
-    //     method: 'POST',
-    //     body: JSON.stringify({
-    //         username: username.value
-    //     })
-    // })
-    if (register) {
-      // data.username = username.value
-      const registerResult = await startRegistration(data)
-      console.log('Registering with passkey', registerResult)
-    } else {
-      const result = await startAuthentication(data)
-      console.log('Logging in with passkey', result, username.value)
-    }
+    // Usernameless: the browser lists the passkeys it has for this site.
+    const options = await identityClient.passkeyRequestOptions()
+    if (!options?.optionsJson) return
+
+    const credential = await startAuthentication({ optionsJSON: JSON.parse(options.optionsJson) })
+    await identityClient.passkeyLogin(new PasskeyCredentialDto({
+      credentialJson: JSON.stringify(credential),
+    }))
+    loginSuccesful()
   } catch (error) {
+    // NotAllowedError means the user cancelled the browser prompt.
+    if (!(error instanceof Error && error.name === 'NotAllowedError'))
+      passkeyError.value = true
     console.error(error)
   } finally {
     loggingIn.value = false
@@ -185,15 +178,9 @@ async function loginWithPasskey(register = false) {
 
 function loginSuccesful() {
   //redirect to ReturnUrl otherwise to home using vue router
-  // console.log('Login successful')
-
-  const returnUrl = new URLSearchParams(window.location.search).get('ReturnUrl');
-  if (returnUrl) {
-    window.location.href = returnUrl;
-  } else {
+  if (!followReturnUrl()) {
     router.push({ name: RouteNames.AccountInfo });
   }
-
 }
 
 const webAuthnSupported = ref(false)
@@ -230,7 +217,7 @@ onMounted(() => {
               <InputText
                 id="UsernameInput"
                 autofocus="true"
-                autocomplete="email"
+                autocomplete="email webauthn"
                 :invalid="usernameError"
                 v-model="username"
                 :disabled="usernameDisabled"
@@ -281,11 +268,15 @@ onMounted(() => {
             <Button
               v-if="webAuthnSupported && supportPasskeySignIn"
               severity="secondary"
-              @click="loginWithPasskey(false)"
+              @click="loginWithPasskey"
               :disabled="loading"
             >
               <i class="fa-duotone fa-solid fa-key"></i>
               Login with Passkey</Button>
+            <small
+              v-if="passkeyError"
+              class="passkey-error"
+            >Passkey sign-in failed. Try again or use your password.</small>
           </div>
 
           <div
@@ -296,13 +287,11 @@ onMounted(() => {
             <div class="options">
               <Button
                 severity="secondary"
-                @click="loginWithPasskey(true)"
               >
                 <i class="fa-brands fa-google"></i>
               </Button>
               <Button
                 severity="secondary"
-                @click="loginWithPasskey(false)"
               ><i class="fa-brands fa-microsoft"></i>
               </Button>
             </div>
@@ -422,6 +411,11 @@ onMounted(() => {
       &>*:not(:last-child) {
         margin-bottom: 0.5rem;
       }
+    }
+
+    .passkey-error {
+      color: var(--p-red-500);
+      text-align: center;
     }
 
     .third-party {
