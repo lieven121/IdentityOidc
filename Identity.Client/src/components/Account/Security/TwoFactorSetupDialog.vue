@@ -1,7 +1,11 @@
 <script setup lang="ts">
-import { TwoFactorSetupDto, UsersClient, Enable2faDto, RecoveryCodesDto } from '@/resources/api-clients/identity-api-client'
-import encodeQR from 'qr';
-
+import {
+  TwoFactorSetupDto,
+  UsersClient,
+  Enable2faDto,
+  RecoveryCodesDto,
+} from '@/resources/api-clients/identity-api-client'
+import encodeQR from 'qr'
 
 interface Props {
   visible: boolean
@@ -15,13 +19,13 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  isLoading: false
+  isLoading: false,
 })
 
 const qrCode = computed(() => {
   if (props.twoFactorSetup?.authenticatorUri) {
-    const svg = encodeQR(props.twoFactorSetup?.authenticatorUri, 'svg');
-    return `data:image/svg+xml;base64,${btoa(svg)}`;
+    const svg = encodeQR(props.twoFactorSetup?.authenticatorUri, 'svg')
+    return `data:image/svg+xml;base64,${btoa(svg)}`
   }
   return null
 })
@@ -41,7 +45,7 @@ const handleConfirm = async () => {
   isEnabling.value = true
   try {
     const enable2faDto = new Enable2faDto({
-      code: recoveryCode.value
+      code: recoveryCode.value,
     })
     const recoveryCodesData = await usersClient.enable2fa(enable2faDto)
     if (recoveryCodesData) {
@@ -72,26 +76,15 @@ const handleCancel = () => {
   >
     <div class="setup-content">
       <p class="section-description">
-        Scan this QR code with your authenticator app (Google Authenticator, Authy, Microsoft Authenticator, etc.)
+        Scan this QR code with your authenticator app (Google Authenticator, Authy, Microsoft
+        Authenticator, etc.)
       </p>
-      <div
-        v-if="twoFactorSetup"
-        class="setup-form"
-      >
+      <div v-if="twoFactorSetup" class="setup-form">
         <div class="qr-code-section">
-          <img
-            v-if="qrCode"
-            :src="qrCode"
-            alt="2FA QR Code"
-            class="qr-code"
-          />
+          <img v-if="qrCode" :src="qrCode" alt="2FA QR Code" class="qr-code" />
         </div>
         <p class="or-text">OR</p>
-        <CopyField
-          label="Manual Entry Key"
-          :value="twoFactorSetup.sharedKey"
-          readonly
-        />
+        <CopyField label="Manual Entry Key" :value="twoFactorSetup.sharedKey" readonly />
         <CopyField
           label="Manual Entry Key (URI Format)"
           value="otpauth://totp..."
@@ -99,10 +92,7 @@ const handleCancel = () => {
           readonly
         />
         <div class="verification-field">
-          <LabelInput
-            label="Verification Code"
-            input-id="verification-code"
-          >
+          <LabelInput label="Verification Code" input-id="verification-code">
             <template #default="{ inputId }">
               <InputOtp
                 v-model="recoveryCode"
@@ -124,12 +114,7 @@ const handleCancel = () => {
       </div>
     </div>
     <template #footer>
-      <Button
-        label="Cancel"
-        icon="fa-duotone fa-xmark"
-        @click="handleCancel"
-        text
-      />
+      <Button label="Cancel" icon="fa-duotone fa-xmark" @click="handleCancel" text />
       <Button
         label="Confirm"
         icon="fa-duotone fa-check"

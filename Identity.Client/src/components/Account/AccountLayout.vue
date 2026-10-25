@@ -23,9 +23,25 @@ const menuItems = computed<MenuItem[]>(() => {
   // Add admin section if user is admin
   if (userStore.isAdmin) {
     items.push(
-      { label: 'Users', icon: 'fa-duotone fa-users', routeName: RouteNames.AdminUsers, adminOnly: true, dividerBefore: true },
-      { label: 'Roles', icon: 'fa-duotone fa-key', routeName: RouteNames.AdminRoles, adminOnly: true },
-      { label: 'Applications', icon: 'fa-duotone fa-box', routeName: RouteNames.AdminApplications, adminOnly: true }
+      {
+        label: 'Users',
+        icon: 'fa-duotone fa-users',
+        routeName: RouteNames.AdminUsers,
+        adminOnly: true,
+        dividerBefore: true,
+      },
+      {
+        label: 'Roles',
+        icon: 'fa-duotone fa-key',
+        routeName: RouteNames.AdminRoles,
+        adminOnly: true,
+      },
+      {
+        label: 'Applications',
+        icon: 'fa-duotone fa-box',
+        routeName: RouteNames.AdminApplications,
+        adminOnly: true,
+      },
     )
   }
 
@@ -48,7 +64,7 @@ const showMobileMenu = computed({
       return
     }
     router.replace({ query: { ...route.query, show: !newValue ? 'true' : undefined }, force: true })
-  }
+  },
 })
 
 const checkMobile = () => {
@@ -88,30 +104,24 @@ const goBackToMenu = () => {
 }
 
 // Watch route changes to update mobile menu visibility
-watch(() => route.name, () => {
-  if (isMobile.value && route.name !== RouteNames.Account) {
-    showMobileMenu.value = false
-  }
-})
+watch(
+  () => route.name,
+  () => {
+    if (isMobile.value && route.name !== RouteNames.Account) {
+      showMobileMenu.value = false
+    }
+  },
+)
 </script>
 
 <template>
   <div class="account-layout">
-    <div
-      class="background"
-      id="AccountBackground"
-    ></div>
-    <div
-      class="layout-container"
-      id="AccountLayoutContainer"
-    >
+    <div class="background" id="AccountBackground"></div>
+    <div class="layout-container" id="AccountLayoutContainer">
       <!-- Mobile: Show either menu or content -->
       <template v-if="isMobile">
         <!-- Mobile Menu List -->
-        <div
-          v-if="showMobileMenu"
-          class="mobile-menu"
-        >
+        <div v-if="showMobileMenu" class="mobile-menu">
           <Card>
             <template #header>
               <div class="menu-header">
@@ -129,10 +139,7 @@ watch(() => route.name, () => {
             </template>
             <template #content>
               <div class="menu-list">
-                <template
-                  v-for="item in menuItems"
-                  :key="item.routeName"
-                >
+                <template v-for="item in menuItems" :key="item.routeName">
                   <Divider v-if="item.dividerBefore" />
                   <div
                     class="menu-item"
@@ -150,10 +157,7 @@ watch(() => route.name, () => {
         </div>
 
         <!-- Mobile Content View -->
-        <div
-          v-else
-          class="mobile-content"
-        >
+        <div v-else class="mobile-content">
           <div class="mobile-header">
             <Button
               icon="fa-duotone fa-arrow-left"
@@ -161,7 +165,7 @@ watch(() => route.name, () => {
               @click="goBackToMenu"
               aria-label="Back to menu"
             />
-            <h2>{{menuItems.find(item => route.name === item.routeName)?.label}}</h2>
+            <h2>{{ menuItems.find((item) => route.name === item.routeName)?.label }}</h2>
           </div>
           <div class="content-wrapper">
             <slot></slot>
@@ -191,15 +195,15 @@ watch(() => route.name, () => {
               </template>
               <template #content>
                 <nav class="sidebar-menu">
-                  <template
-                    v-for="item in menuItems"
-                    :key="item.routeName"
-                  >
+                  <template v-for="item in menuItems" :key="item.routeName">
                     <Divider v-if="item.dividerBefore" />
                     <router-link
                       :to="{ name: item.routeName }"
                       class="menu-link"
-                      :class="{ 'admin-item': item.adminOnly, 'active': route.name === item.routeName }"
+                      :class="{
+                        'admin-item': item.adminOnly,
+                        active: route.name === item.routeName,
+                      }"
                     >
                       <i :class="item.icon"></i>
                       <span>{{ item.label }}</span>
@@ -378,22 +382,16 @@ watch(() => route.name, () => {
       color: var(--text);
       background: var(--background-color);
 
-
-
-
-
       &.active {
         --background-color: var(--accent-color);
         --text: var(--accent-inverse-color);
         --icon-color: var(--accent-inverse-color);
-
       }
 
       &:hover {
         --background-color: var(--accent-sub-color);
         --text: var(--accent-inverse-color);
         --icon-color: var(--accent-inverse-color);
-
       }
 
       i {
@@ -407,7 +405,8 @@ watch(() => route.name, () => {
       }
 
       &.admin-item:not(.active) {
-        i {}
+        i {
+        }
       }
     }
   }

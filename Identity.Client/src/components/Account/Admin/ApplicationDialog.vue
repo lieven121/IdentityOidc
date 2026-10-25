@@ -28,8 +28,17 @@ const adminClient = new AdminClient()
 const { ask, confirm } = useConfirmDialog()
 
 const clientTypes = [
-  { label: 'Public', value: 'public', description: 'Browser and mobile apps. No secret; PKCE is always required.' },
-  { label: 'Confidential', value: 'confidential', description: 'Server-side apps and services that can keep a secret. Also allows client credentials.' },
+  {
+    label: 'Public',
+    value: 'public',
+    description: 'Browser and mobile apps. No secret; PKCE is always required.',
+  },
+  {
+    label: 'Confidential',
+    value: 'confidential',
+    description:
+      'Server-side apps and services that can keep a secret. Also allows client credentials.',
+  },
 ]
 
 const form = reactive({
@@ -51,27 +60,39 @@ const errorMessage = ref<string | null>(null)
 const isNew = computed(() => props.application === null)
 const readOnly = computed(() => props.application?.isConfigManaged === true)
 const isPublic = computed(() => form.clientType === 'public')
-const scopeOptions = computed(() => [...new Set([...props.scopes, ...extraScopes.value, ...form.scopes])].sort())
+const scopeOptions = computed(() =>
+  [...new Set([...props.scopes, ...extraScopes.value, ...form.scopes])].sort(),
+)
 const savedAsConfidential = computed(() => props.application?.clientType === 'confidential')
-const switchingToConfidential = computed(() => !isNew.value && !savedAsConfidential.value && !isPublic.value)
+const switchingToConfidential = computed(
+  () => !isNew.value && !savedAsConfidential.value && !isPublic.value,
+)
 
-watch(visible, (open) => {
-  if (!open) return
-  const app = props.application
-  form.clientId = app?.clientId ?? ''
-  form.displayName = app?.displayName ?? ''
-  form.clientType = app?.clientType ?? 'public'
-  form.pkce = app?.pkce ?? true
-  form.redirectUris = (app?.redirectUris ?? []).join('\n')
-  form.postLogoutRedirectUris = (app?.postLogoutRedirectUris ?? []).join('\n')
-  form.scopes = [...(app?.scopes ?? [])]
-  form.requiredRoles = [...(app?.requiredRoles ?? [])]
-  customScope.value = ''
-  extraScopes.value = []
-  errorMessage.value = null
-}, { immediate: true })
+watch(
+  visible,
+  (open) => {
+    if (!open) return
+    const app = props.application
+    form.clientId = app?.clientId ?? ''
+    form.displayName = app?.displayName ?? ''
+    form.clientType = app?.clientType ?? 'public'
+    form.pkce = app?.pkce ?? true
+    form.redirectUris = (app?.redirectUris ?? []).join('\n')
+    form.postLogoutRedirectUris = (app?.postLogoutRedirectUris ?? []).join('\n')
+    form.scopes = [...(app?.scopes ?? [])]
+    form.requiredRoles = [...(app?.requiredRoles ?? [])]
+    customScope.value = ''
+    extraScopes.value = []
+    errorMessage.value = null
+  },
+  { immediate: true },
+)
 
-const lines = (value: string) => value.split('\n').map((l) => l.trim()).filter((l) => l.length > 0)
+const lines = (value: string) =>
+  value
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0)
 
 const addCustomScope = () => {
   const scope = customScope.value.trim().toLowerCase()
@@ -118,7 +139,8 @@ const changeSecret = async (custom: boolean) => {
   if (custom) {
     const value = await ask({
       title: 'Set Client Secret',
-      message: 'Enter a new secret of at least 24 characters. The current secret stops working immediately.',
+      message:
+        'Enter a new secret of at least 24 characters. The current secret stops working immediately.',
       confirm: { text: 'Set Secret', severity: 'warning' },
       cancel: { text: 'Cancel', severity: 'secondary' },
       input: { label: 'New client secret', type: 'password', autocomplete: 'new-password' },
@@ -137,7 +159,10 @@ const changeSecret = async (custom: boolean) => {
 
   isChangingSecret.value = true
   try {
-    const result = await adminClient.admin_SetApplicationSecret(app.clientId, new SetClientSecretDto({ clientSecret }))
+    const result = await adminClient.admin_SetApplicationSecret(
+      app.clientId,
+      new SetClientSecretDto({ clientSecret }),
+    )
     visible.value = false
     emit('saved', result)
   } catch (error) {
@@ -152,28 +177,17 @@ const changeSecret = async (custom: boolean) => {
 <template>
   <Dialog
     v-model:visible="visible"
-    :header="isNew ? 'Register Application' : (application?.displayName || application?.clientId)"
+    :header="isNew ? 'Register Application' : application?.displayName || application?.clientId"
     :modal="true"
     :style="{ width: '50rem' }"
     :breakpoints="{ '960px': '75vw', '640px': '90vw' }"
   >
-    <form
-      class="app-form"
-      @submit.prevent="save"
-    >
-      <Message
-        v-if="readOnly"
-        severity="info"
-        :closable="false"
-      >
-        This application is managed by configuration (OpenIddict:ApplicationConfigs) and is recreated on every
-        start, so it can't be changed here.
+    <form class="app-form" @submit.prevent="save">
+      <Message v-if="readOnly" severity="info" :closable="false">
+        This application is managed by configuration (OpenIddict:ApplicationConfigs) and is
+        recreated on every start, so it can't be changed here.
       </Message>
-      <Message
-        v-if="errorMessage"
-        severity="error"
-        :closable="false"
-      >
+      <Message v-if="errorMessage" severity="error" :closable="false">
         {{ errorMessage }}
       </Message>
 
@@ -210,22 +224,16 @@ const changeSecret = async (custom: boolean) => {
           :disabled="readOnly"
         />
         <small>{{ clientTypes.find((t) => t.value === form.clientType)?.description }}</small>
-        <small
-          v-if="switchingToConfidential"
-          class="warn"
-        >
+        <small v-if="switchingToConfidential" class="warn">
           A client secret will be generated when you save.
         </small>
       </div>
 
       <div class="field checkbox-field">
-        <Checkbox
-          v-model="form.pkce"
-          input-id="app-pkce"
-          binary
-          :disabled="readOnly || isPublic"
-        />
-        <label for="app-pkce">Require PKCE{{ isPublic ? ' (always on for public clients)' : '' }}</label>
+        <Checkbox v-model="form.pkce" input-id="app-pkce" binary :disabled="readOnly || isPublic" />
+        <label for="app-pkce"
+          >Require PKCE{{ isPublic ? ' (always on for public clients)' : '' }}</label
+        >
       </div>
 
       <div class="field">
@@ -279,8 +287,8 @@ const changeSecret = async (custom: boolean) => {
           />
         </InputGroup>
         <small>
-          openid, offline_access, email, profile and roles are always allowed. The admin scope grants the External
-          API to confidential clients.
+          openid, offline_access, email, profile and roles are always allowed. The admin scope
+          grants the External API to confidential clients.
         </small>
       </div>
 
@@ -303,11 +311,7 @@ const changeSecret = async (custom: boolean) => {
       >
         <label>Client secret</label>
         <div class="secret-row">
-          <Tag
-            value="Secret set"
-            severity="success"
-            icon="fa-duotone fa-lock"
-          />
+          <Tag value="Secret set" severity="success" icon="fa-duotone fa-lock" />
           <span class="hint">Stored hashed; it can be replaced but not viewed.</span>
         </div>
         <div class="secret-actions">
@@ -333,10 +337,7 @@ const changeSecret = async (custom: boolean) => {
       </div>
 
       <!-- Lets Enter in a text field submit the form. -->
-      <button
-        type="submit"
-        hidden
-      />
+      <button type="submit" hidden />
     </form>
 
     <template #footer>

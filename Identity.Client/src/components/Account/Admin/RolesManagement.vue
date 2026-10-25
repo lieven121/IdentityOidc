@@ -47,7 +47,7 @@ const createRole = async () => {
   errorMessage.value = null
   const name = await ask({
     title: 'Create Role',
-    message: 'Letters, digits, spaces, \'.\', \'_\' or \'-\'.',
+    message: "Letters, digits, spaces, '.', '_' or '-'.",
     confirm: { text: 'Create', severity: 'success' },
     cancel: { text: 'Cancel', severity: 'secondary' },
     input: roleNameInput,
@@ -66,7 +66,8 @@ const renameRole = async (role: RoleInfo) => {
   errorMessage.value = null
   const name = await ask({
     title: `Rename "${role.name}"`,
-    message: 'Users keep the role under its new name, and applications that require it are updated. Signed-in users pick up the new name on their next token refresh.',
+    message:
+      'Users keep the role under its new name, and applications that require it are updated. Signed-in users pick up the new name on their next token refresh.',
     confirm: { text: 'Rename', severity: 'primary' },
     cancel: { text: 'Cancel', severity: 'secondary' },
     input: roleNameInput,
@@ -131,7 +132,9 @@ const viewRole = async (role: RoleInfo) => {
 
 const searchUsers = async (event: { query: string }) => {
   try {
-    const page = await adminClient.admin_GetUsersSearch(new UsersFilter({ email: event.query, username: '', page: 0, pageSize: 10 }))
+    const page = await adminClient.admin_GetUsersSearch(
+      new UsersFilter({ email: event.query, username: '', page: 0, pageSize: 10 }),
+    )
     const memberIds = new Set(members.value.map((m) => m.id))
     userSuggestions.value = (page?.items ?? []).filter((u) => u.id && !memberIds.has(u.id))
   } catch (error) {
@@ -194,28 +197,17 @@ const removeMember = async (member: RoleMemberDto) => {
           Roles defined in configuration can't be renamed or deleted.
         </p>
 
-        <Message
-          v-if="errorMessage"
-          severity="error"
-          :closable="false"
-          class="error-message"
-        >
+        <Message v-if="errorMessage" severity="error" :closable="false" class="error-message">
           {{ errorMessage }}
         </Message>
 
-        <div
-          v-if="isLoading && roles.length === 0"
-          class="loading-state"
-        >
+        <div v-if="isLoading && roles.length === 0" class="loading-state">
           <ProgressSpinner />
           <p>Loading roles...</p>
         </div>
 
         <template v-else>
-          <template
-            v-for="(role, index) in roles"
-            :key="role.id"
-          >
+          <template v-for="(role, index) in roles" :key="role.id">
             <Divider v-if="index > 0" />
 
             <div class="role-section">
@@ -267,10 +259,7 @@ const removeMember = async (member: RoleMemberDto) => {
             </div>
           </template>
 
-          <div
-            v-if="roles.length === 0"
-            class="empty-state"
-          >
+          <div v-if="roles.length === 0" class="empty-state">
             <i class="fa-duotone fa-key"></i>
             <p>No roles found</p>
           </div>
@@ -288,11 +277,7 @@ const removeMember = async (member: RoleMemberDto) => {
     :breakpoints="{ '960px': '75vw', '640px': '90vw' }"
   >
     <div class="role-details">
-      <Message
-        v-if="memberError"
-        severity="error"
-        :closable="false"
-      >
+      <Message v-if="memberError" severity="error" :closable="false">
         {{ memberError }}
       </Message>
 
@@ -317,26 +302,19 @@ const removeMember = async (member: RoleMemberDto) => {
           label="Add"
           icon="fa-duotone fa-user-plus"
           :disabled="!userQuery || typeof userQuery === 'string'"
-          :loading="!!busyMemberId && typeof userQuery === 'object' && userQuery?.id === busyMemberId"
+          :loading="
+            !!busyMemberId && typeof userQuery === 'object' && userQuery?.id === busyMemberId
+          "
           @click="addMember"
         />
       </div>
 
-      <div
-        v-if="isLoadingMembers"
-        class="loading-state"
-      >
+      <div v-if="isLoadingMembers" class="loading-state">
         <ProgressSpinner />
       </div>
 
-      <ul
-        v-else-if="members.length"
-        class="member-list"
-      >
-        <li
-          v-for="member in members"
-          :key="member.id"
-        >
+      <ul v-else-if="members.length" class="member-list">
+        <li v-for="member in members" :key="member.id">
           <div class="member-info">
             <span class="email">{{ member.email }}</span>
             <small>{{ member.username }}</small>
@@ -346,7 +324,9 @@ const removeMember = async (member: RoleMemberDto) => {
             value="Configured user"
             severity="secondary"
             icon="fa-duotone fa-lock"
-            v-tooltip.top="'Roles of users in OpenIddict:Users are re-synced from configuration on every start.'"
+            v-tooltip.top="
+              'Roles of users in OpenIddict:Users are re-synced from configuration on every start.'
+            "
           />
           <Button
             v-else
@@ -361,12 +341,7 @@ const removeMember = async (member: RoleMemberDto) => {
         </li>
       </ul>
 
-      <p
-        v-else
-        class="no-members"
-      >
-        No users have this role.
-      </p>
+      <p v-else class="no-members">No users have this role.</p>
     </div>
   </Dialog>
 </template>

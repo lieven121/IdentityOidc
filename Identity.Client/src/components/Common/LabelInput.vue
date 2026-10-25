@@ -12,10 +12,7 @@ withDefaults(
 
 <template>
   <div>
-    <label
-      v-if="label"
-      :for="inputId"
-    >{{ label }}</label>
+    <label v-if="label" :for="inputId">{{ label }}</label>
     <slot :inputId="inputId"></slot>
   </div>
 </template>

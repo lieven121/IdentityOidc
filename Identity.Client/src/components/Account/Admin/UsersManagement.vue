@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { AdminClient, ResultPageOfUserDto, UserDto, UsersFilter, CreateUserDto, ResetPasswordDto } from '@/resources/api-clients/identity-api-client'
+import {
+  AdminClient,
+  ResultPageOfUserDto,
+  UserDto,
+  UsersFilter,
+  CreateUserDto,
+  ResetPasswordDto,
+} from '@/resources/api-clients/identity-api-client'
 import { apiErrorMessage } from '@/utils/dialogs'
 
 const adminClient = new AdminClient()
@@ -15,13 +22,13 @@ const showCreateUserDialog = ref(false)
 const newUserForm = ref({
   email: '',
   username: '',
-  password: ''
+  password: '',
 })
 
 const showResetPasswordDialog = ref(false)
 const resetPasswordForm = ref({
   newPassword: '',
-  confirmPassword: ''
+  confirmPassword: '',
 })
 
 const isCreatingUser = ref(false)
@@ -30,7 +37,7 @@ const isUpdatingUserRoles = ref(false)
 const allRoles = ref<string[]>([])
 const roleToAdd = ref<string | null>(null)
 const roleError = ref<string | null>(null)
-const assignableRoles = computed(() => allRoles.value.filter(r => !userRoles.value.includes(r)))
+const assignableRoles = computed(() => allRoles.value.filter((r) => !userRoles.value.includes(r)))
 
 const canEdit = true
 
@@ -67,7 +74,7 @@ const viewUser = async (user: UserDto) => {
   roleToAdd.value = null
   roleError.value = null
   try {
-    allRoles.value = ((await adminClient.admin_GetAllRoles()) ?? []).map(r => r.name)
+    allRoles.value = ((await adminClient.admin_GetAllRoles()) ?? []).map((r) => r.name)
   } catch (error) {
     console.error('Failed to load roles:', error)
   }
@@ -84,7 +91,7 @@ const openCreateUserDialog = () => {
   newUserForm.value = {
     email: '',
     username: '',
-    password: ''
+    password: '',
   }
   showCreateUserDialog.value = true
 }
@@ -99,7 +106,7 @@ const handleCreateUser = async () => {
     const createDto = new CreateUserDto({
       email: newUserForm.value.email,
       username: newUserForm.value.username,
-      password: newUserForm.value.password
+      password: newUserForm.value.password,
     })
     await adminClient.admin_CreateUser(createDto)
     showCreateUserDialog.value = false
@@ -116,7 +123,7 @@ const openResetPasswordDialog = () => {
   if (!selectedUser.value) return
   resetPasswordForm.value = {
     newPassword: '',
-    confirmPassword: ''
+    confirmPassword: '',
   }
   showResetPasswordDialog.value = true
 }
@@ -132,7 +139,7 @@ const handleResetPassword = async () => {
   isResettingPassword.value = true
   try {
     const resetDto = new ResetPasswordDto({
-      newPassword: resetPasswordForm.value.newPassword
+      newPassword: resetPasswordForm.value.newPassword,
     })
     await adminClient.admin_ResetPassword(selectedUser.value.id!, resetDto)
     showResetPasswordDialog.value = false
@@ -170,7 +177,7 @@ const removeUserFromRole = async (roleName: string) => {
   isUpdatingUserRoles.value = true
   try {
     await adminClient.admin_RemoveUserFromRoleById(selectedUser.value.id!, roleName)
-    userRoles.value = userRoles.value.filter(r => r !== roleName)
+    userRoles.value = userRoles.value.filter((r) => r !== roleName)
   } catch (error) {
     roleError.value = apiErrorMessage(error, 'The role could not be removed.')
     console.error('Failed to remove role:', error)
@@ -221,7 +228,7 @@ const removeUserFromRole = async (roleName: string) => {
               <InputText
                 v-model="searchFilter.email"
                 placeholder="Search by email..."
-                style="width: 100%;"
+                style="width: 100%"
               />
             </InputGroup>
             <InputGroup>
@@ -231,7 +238,7 @@ const removeUserFromRole = async (roleName: string) => {
               <InputText
                 v-model="searchFilter.username"
                 placeholder="Search by username..."
-                style="width: 100%;"
+                style="width: 100%"
               />
             </InputGroup>
             <Button
@@ -240,19 +247,11 @@ const removeUserFromRole = async (roleName: string) => {
               @click="handleSearch"
               :loading="isSearching"
             />
-            <Button
-              label="Clear"
-              icon="fa-duotone fa-xmark"
-              text
-              @click="clearSearch"
-            />
+            <Button label="Clear" icon="fa-duotone fa-xmark" text @click="clearSearch" />
           </div>
         </div>
 
-        <div
-          v-if="isLoading"
-          class="loading-state"
-        >
+        <div v-if="isLoading" class="loading-state">
           <ProgressSpinner />
           <p>Loading users...</p>
         </div>
@@ -267,27 +266,19 @@ const removeUserFromRole = async (roleName: string) => {
           class="users-table"
           responsiveLayout="scroll"
         >
-          <Column
-            field="username"
-            header="Username"
-            sortable
-          >
+          <Column field="username" header="Username" sortable>
             <template #body="{ data }">
               <div class="user-cell">
                 <Avatar
                   :label="data.username?.[0]?.toUpperCase()"
                   shape="circle"
-                  style="background-color: var(--primary-color);"
+                  style="background-color: var(--primary-color)"
                 />
                 <span class="username">{{ data.username }}</span>
               </div>
             </template>
           </Column>
-          <Column
-            field="email"
-            header="Email"
-            sortable
-          />
+          <Column field="email" header="Email" sortable />
           <!-- Roles column removed as roles property is not available in UserDto -->
           <Column header="Actions">
             <template #body="{ data }">
@@ -305,10 +296,7 @@ const removeUserFromRole = async (roleName: string) => {
           </Column>
         </DataTable>
 
-        <div
-          v-else
-          class="empty-state"
-        >
+        <div v-else class="empty-state">
           <i class="fa-duotone fa-users"></i>
           <p>No users found</p>
         </div>
@@ -324,10 +312,7 @@ const removeUserFromRole = async (roleName: string) => {
     :style="{ width: '50rem' }"
     :breakpoints="{ '960px': '75vw', '640px': '90vw' }"
   >
-    <div
-      v-if="selectedUser"
-      class="user-details"
-    >
+    <div v-if="selectedUser" class="user-details">
       <div class="detail-section">
         <h4>Account Information</h4>
         <div class="detail-row">
@@ -342,11 +327,7 @@ const removeUserFromRole = async (roleName: string) => {
 
       <div class="detail-section">
         <h4>Roles</h4>
-        <Message
-          v-if="roleError"
-          severity="error"
-          :closable="false"
-        >
+        <Message v-if="roleError" severity="error" :closable="false">
           {{ roleError }}
         </Message>
         <div class="tags-section">
@@ -357,17 +338,9 @@ const removeUserFromRole = async (roleName: string) => {
             :removable="canEdit && !isUpdatingUserRoles"
             @remove="removeUserFromRole(role)"
           />
-          <span
-            v-if="userRoles.length === 0"
-            class="no-roles"
-          >
-            No roles
-          </span>
+          <span v-if="userRoles.length === 0" class="no-roles"> No roles </span>
         </div>
-        <div
-          v-if="canEdit"
-          class="add-role"
-        >
+        <div v-if="canEdit" class="add-role">
           <Select
             v-model="roleToAdd"
             :options="assignableRoles"
@@ -416,11 +389,7 @@ const removeUserFromRole = async (roleName: string) => {
       </div>
       <div class="field">
         <label for="new-username">Username:</label>
-        <InputText
-          id="new-username"
-          v-model="newUserForm.username"
-          placeholder="username"
-        />
+        <InputText id="new-username" v-model="newUserForm.username" placeholder="username" />
       </div>
       <div class="field">
         <label for="new-password">Password:</label>
@@ -526,7 +495,7 @@ const removeUserFromRole = async (roleName: string) => {
     gap: 0.5rem;
     flex-wrap: wrap;
 
-    >* {
+    > * {
       flex: 1;
       min-width: 150px;
     }

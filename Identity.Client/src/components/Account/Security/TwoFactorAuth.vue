@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import ConfirmDialog from '@/components/Common/Dialogs/ConfirmDialog.vue'
-import { UsersClient, TwoFactorStatusDto, TwoFactorCodeDto } from '@/resources/api-clients/identity-api-client'
+import {
+  UsersClient,
+  TwoFactorStatusDto,
+  TwoFactorCodeDto,
+} from '@/resources/api-clients/identity-api-client'
 import { useDialog } from 'primevue'
 
 const dialog = useDialog()
@@ -48,21 +52,22 @@ const handleGenerateRecoveryCodes = () => {
   dialog.open(ConfirmDialog, {
     data: {
       title: 'Regenerate Recovery Codes',
-      message: 'Are you sure you want to regenerate your recovery codes? This will invalidate your existing recovery codes.',
+      message:
+        'Are you sure you want to regenerate your recovery codes? This will invalidate your existing recovery codes.',
       confirm: {
         text: 'Yes, Regenerate',
-        severity: 'warn'
+        severity: 'warn',
       },
       cancel: {
         text: 'Cancel',
-        severity: 'secondary'
+        severity: 'secondary',
       },
       input: codeInput,
     },
     props: {
       style: {
-        maxWidth: "40rem",
-        width: "100%",
+        maxWidth: '40rem',
+        width: '100%',
         // width: "50vw",
       },
       modal: true,
@@ -75,9 +80,8 @@ const handleGenerateRecoveryCodes = () => {
       if (typeof opt?.data === 'string') {
         emit('generate-codes', opt.data)
       }
-    }
-  });
-
+    },
+  })
 }
 
 const handleDisable2fa = async () => {
@@ -85,21 +89,22 @@ const handleDisable2fa = async () => {
   dialog.open(ConfirmDialog, {
     data: {
       title: 'Disable Two-Factor Authentication',
-      message: 'Are you sure you want to disable two-factor authentication? This will reduce the security of your account.',
+      message:
+        'Are you sure you want to disable two-factor authentication? This will reduce the security of your account.',
       confirm: {
         text: 'Yes, Disable',
-        severity: 'danger'
+        severity: 'danger',
       },
       cancel: {
         text: 'Cancel',
-        severity: 'secondary'
+        severity: 'secondary',
       },
       input: codeInput,
     },
     props: {
       style: {
-        maxWidth: "40rem",
-        width: "100%",
+        maxWidth: '40rem',
+        width: '100%',
         // width: "50vw",
       },
       modal: true,
@@ -110,8 +115,7 @@ const handleDisable2fa = async () => {
     },
     onClose: async (opt) => {
       try {
-        if (typeof opt?.data !== 'string')
-          return
+        if (typeof opt?.data !== 'string') return
         await usersClient.disable2fa(new TwoFactorCodeDto({ code: opt.data }))
         await loadTwoFactorStatus()
         emit('disable2fa')
@@ -120,8 +124,8 @@ const handleDisable2fa = async () => {
       } finally {
         isDisabling2fa.value = false
       }
-    }
-  });
+    },
+  })
 }
 
 const refresh2faStatus = async () => {
@@ -129,7 +133,7 @@ const refresh2faStatus = async () => {
 }
 
 defineExpose({
-  refresh2faStatus
+  refresh2faStatus,
 })
 </script>
 
@@ -147,18 +151,12 @@ defineExpose({
         Add an extra layer of security to your account by enabling two-factor authentication.
       </p>
 
-      <div
-        v-if="isFetchingTwoFactor"
-        class="loading-state"
-      >
+      <div v-if="isFetchingTwoFactor" class="loading-state">
         <ProgressSpinner />
         <p>Loading 2FA status...</p>
       </div>
 
-      <div
-        v-else-if="!twoFactorStatus?.is2faEnabled"
-        class="two-factor-status"
-      >
+      <div v-else-if="!twoFactorStatus?.is2faEnabled" class="two-factor-status">
         <div class="status-info">
           <i class="fa-duotone fa-circle-exclamation status-icon warning"></i>
           <div class="status-text">
@@ -176,10 +174,7 @@ defineExpose({
         />
       </div>
 
-      <div
-        v-else
-        class="two-factor-status enabled"
-      >
+      <div v-else class="two-factor-status enabled">
         <div class="status-info">
           <i class="fa-duotone fa-circle-check status-icon success"></i>
           <div class="status-text">
@@ -223,7 +218,6 @@ defineExpose({
     background-color: rgba(34, 197, 94, 0.05);
   }
 
-
   .status-text {
     h4 {
       margin: 0 0 0.25rem 0;
@@ -236,7 +230,6 @@ defineExpose({
       font-size: 0.9rem;
     }
   }
-
 
   .two-factor-actions {
     display: flex;

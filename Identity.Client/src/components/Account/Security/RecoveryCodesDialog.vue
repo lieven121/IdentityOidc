@@ -26,18 +26,12 @@ const { copy } = useClipboard()
   >
     <div class="recovery-content">
       <p class="warning">
-        Save these recovery codes in a safe place. You can use them to access your account if you lose access to your
-        authenticator app.
+        Save these recovery codes in a safe place. You can use them to access your account if you
+        lose access to your authenticator app.
       </p>
-      <div
-        v-if="recoveryCodesData"
-        class="codes-section"
-      >
+      <div v-if="recoveryCodesData" class="codes-section">
         <ul class="codes-list">
-          <li
-            v-for="code in recoveryCodesData.recoveryCodes"
-            :key="code"
-          >
+          <li v-for="code in recoveryCodesData.recoveryCodes" :key="code">
             {{ code }}
           </li>
         </ul>
@@ -71,7 +65,6 @@ const { copy } = useClipboard()
     grid-template-columns: repeat(2, minmax(120px, 1fr));
     list-style: none;
     font-family: monospace;
-
 
     @container (max-width: 400px) {
       grid-template-columns: 1fr;

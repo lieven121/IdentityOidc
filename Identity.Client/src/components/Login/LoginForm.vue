@@ -1,34 +1,38 @@
 <script setup lang="ts">
+import { startAuthentication, browserSupportsWebAuthn } from '@simplewebauthn/browser'
+import type { ExternalLoginProvider } from './ExternalLoginProvider'
 import {
-  startAuthentication,
-  browserSupportsWebAuthn,
-} from '@simplewebauthn/browser'
-import type { ExternalLoginProvider } from './ExternalLoginProvider';
-import { ApiException, IdentityClient, LoginRequest, PasskeyCredentialDto } from '@/resources/api-clients/identity-api-client';
-import { RouteNames } from '@/router/routes';
-import { followReturnUrl } from '@/utils/safe-redirect';
+  ApiException,
+  IdentityClient,
+  LoginRequest,
+  PasskeyCredentialDto,
+} from '@/resources/api-clients/identity-api-client'
+import { RouteNames } from '@/router/routes'
+import { followReturnUrl } from '@/utils/safe-redirect'
 
+const props = withDefaults(
+  defineProps<{
+    position?: 'left' | 'center' | 'right'
 
-const props = withDefaults(defineProps<{
-  position?: 'left' | 'center' | 'right';
+    logo?: string
+    showPasswordDefault?: boolean
 
-  logo?: string;
-  showPasswordDefault?: boolean;
+    supportPasskeySignIn?: boolean
+    externalProviders?: ExternalLoginProvider[]
+  }>(),
+  {
+    position: 'left',
 
-  supportPasskeySignIn?: boolean;
-  externalProviders?: ExternalLoginProvider[]
-}>(), {
-  position: 'left',
+    showPasswordDefault: true,
 
-  showPasswordDefault: true,
-
-  supportPasskeySignIn: false,
-  externalProviders: () => [],
-});
+    supportPasskeySignIn: false,
+    externalProviders: () => [],
+  },
+)
 
 const router = useRouter()
 
-const identityClient = new IdentityClient();
+const identityClient = new IdentityClient()
 
 const internalLoading = ref(false)
 const loading = computed(() => {
@@ -90,16 +94,16 @@ async function login() {
     }
 
     try {
-
-      await identityClient.login(new LoginRequest({
-        email: username.value,
-        password: password.value,
-        twoFactorCode: otp.value,
-      }))
+      await identityClient.login(
+        new LoginRequest({
+          email: username.value,
+          password: password.value,
+          twoFactorCode: otp.value,
+        }),
+      )
       loginSuccesful()
-
     } catch (error) {
-      if ((error instanceof ApiException)) {
+      if (error instanceof ApiException) {
         console.error(error)
         if (error.status == 401) {
           usernameError.value = true
@@ -111,7 +115,6 @@ async function login() {
           showOtpInput()
         }
       }
-
     }
 
     // if (true && !showOtp.value) {
@@ -125,7 +128,6 @@ async function login() {
     //   }, 100)
     //   if (otp.value == '') return
     // }
-
 
     // console.log('Logging in with name:', username.value)
   } catch (error) {
@@ -162,14 +164,15 @@ async function loginWithPasskey() {
     if (!options?.optionsJson) return
 
     const credential = await startAuthentication({ optionsJSON: JSON.parse(options.optionsJson) })
-    await identityClient.passkeyLogin(new PasskeyCredentialDto({
-      credentialJson: JSON.stringify(credential),
-    }))
+    await identityClient.passkeyLogin(
+      new PasskeyCredentialDto({
+        credentialJson: JSON.stringify(credential),
+      }),
+    )
     loginSuccesful()
   } catch (error) {
     // NotAllowedError means the user cancelled the browser prompt.
-    if (!(error instanceof Error && error.name === 'NotAllowedError'))
-      passkeyError.value = true
+    if (!(error instanceof Error && error.name === 'NotAllowedError')) passkeyError.value = true
     console.error(error)
   } finally {
     loggingIn.value = false
@@ -179,7 +182,7 @@ async function loginWithPasskey() {
 function loginSuccesful() {
   //redirect to ReturnUrl otherwise to home using vue router
   if (!followReturnUrl()) {
-    router.push({ name: RouteNames.AccountInfo });
+    router.push({ name: RouteNames.AccountInfo })
   }
 }
 
@@ -191,26 +194,12 @@ onMounted(() => {
 </script>
 
 <template>
-  <div
-    class="login-form"
-    :class="position"
-  >
-
-    <div
-      class="login-background"
-      id="LoginBackground"
-    ></div>
-    <div
-      class="login-wrapper"
-      id="LoginWrapper"
-    >
+  <div class="login-form" :class="position">
+    <div class="login-background" id="LoginBackground"></div>
+    <div class="login-wrapper" id="LoginWrapper">
       <Card class="login-card">
         <template #content>
-          <div class="logo-wrapper"><img
-              class="logo"
-              :src="logo"
-              alt="Logo"
-            /></div>
+          <div class="logo-wrapper"><img class="logo" :src="logo" alt="Logo" /></div>
           <h2>Login</h2>
           <form class="inputs">
             <div class="input-label">
@@ -227,10 +216,7 @@ onMounted(() => {
               <label for="UsernameInput">Email</label>
             </div>
 
-            <div
-              class="input-label"
-              v-show="showPassword"
-            >
+            <div class="input-label" v-show="showPassword">
               <Password
                 :inputProps="{ autocomplete: 'current-password' }"
                 :invalid="passwordError"
@@ -244,10 +230,7 @@ onMounted(() => {
               <label for="PasswordInput">Password</label>
             </div>
 
-            <div
-              class="input-label otp"
-              v-if="showOtp"
-            >
+            <div class="input-label otp" v-if="showOtp">
               <InputOtp
                 :length="6"
                 :invalid="otpError"
@@ -260,11 +243,7 @@ onMounted(() => {
           </form>
 
           <div class="buttons">
-            <Button
-              severity="primary"
-              @click="login"
-              :disabled="loading"
-            >Login</Button>
+            <Button severity="primary" @click="login" :disabled="loading">Login</Button>
             <Button
               v-if="webAuthnSupported && supportPasskeySignIn"
               severity="secondary"
@@ -272,35 +251,26 @@ onMounted(() => {
               :disabled="loading"
             >
               <i class="fa-duotone fa-solid fa-key"></i>
-              Login with Passkey</Button>
-            <small
-              v-if="passkeyError"
-              class="passkey-error"
-            >Passkey sign-in failed. Try again or use your password.</small>
+              Login with Passkey</Button
+            >
+            <small v-if="passkeyError" class="passkey-error"
+              >Passkey sign-in failed. Try again or use your password.</small
+            >
           </div>
 
-          <div
-            class="third-party"
-            v-if="externalProviders.length"
-          >
+          <div class="third-party" v-if="externalProviders.length">
             <Divider />
             <div class="options">
-              <Button
-                severity="secondary"
-              >
+              <Button severity="secondary">
                 <i class="fa-brands fa-google"></i>
               </Button>
-              <Button
-                severity="secondary"
-              ><i class="fa-brands fa-microsoft"></i>
-              </Button>
+              <Button severity="secondary"><i class="fa-brands fa-microsoft"></i> </Button>
             </div>
           </div>
         </template>
       </Card>
     </div>
   </div>
-
 </template>
 
 <style lang="scss" scoped>
@@ -314,7 +284,6 @@ onMounted(() => {
   grid-template-columns: var(--desktop-layout-columns, auto);
   --wrapper-border: var(--border-width) solid var(--p-neutral-500);
   --layout-panel-width: var(--login-wrapper-width, 40rem);
-
 
   &.left {
     --desktop-layout-columns: var(--layout-panel-width) 1fr;
@@ -397,7 +366,6 @@ onMounted(() => {
       }
     }
 
-
     h2 {
       text-align: center;
     }
@@ -408,7 +376,7 @@ onMounted(() => {
       display: flex;
       flex-direction: column;
 
-      &>*:not(:last-child) {
+      & > *:not(:last-child) {
         margin-bottom: 0.5rem;
       }
     }

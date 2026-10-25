@@ -2,7 +2,11 @@
 import ApplicationDialog from '@/components/Account/Admin/ApplicationDialog.vue'
 import ClientSecretDialog from '@/components/Account/Admin/ClientSecretDialog.vue'
 import CopyField from '@/components/Common/CopyField.vue'
-import { AdminClient, ApplicationDto, ApplicationSecretDto } from '@/resources/api-clients/identity-api-client'
+import {
+  AdminClient,
+  ApplicationDto,
+  ApplicationSecretDto,
+} from '@/resources/api-clients/identity-api-client'
 import { apiErrorMessage, useConfirmDialog } from '@/utils/dialogs'
 
 const adminClient = new AdminClient()
@@ -104,32 +108,21 @@ const deleteApplication = async (app: ApplicationDto) => {
     <template #content>
       <div class="apps-content">
         <p class="section-description">
-          Manage OAuth/OIDC applications, client credentials, and redirect URIs for integrated services.
-          Applications defined in configuration are read-only.
+          Manage OAuth/OIDC applications, client credentials, and redirect URIs for integrated
+          services. Applications defined in configuration are read-only.
         </p>
 
-        <Message
-          v-if="errorMessage"
-          severity="error"
-          :closable="false"
-          class="error-message"
-        >
+        <Message v-if="errorMessage" severity="error" :closable="false" class="error-message">
           {{ errorMessage }}
         </Message>
 
-        <div
-          v-if="isLoading && applications.length === 0"
-          class="loading-state"
-        >
+        <div v-if="isLoading && applications.length === 0" class="loading-state">
           <ProgressSpinner />
           <p>Loading applications...</p>
         </div>
 
         <template v-else>
-          <template
-            v-for="(app, index) in applications"
-            :key="app.clientId"
-          >
+          <template v-for="(app, index) in applications" :key="app.clientId">
             <Divider v-if="index > 0" />
 
             <div class="app-section">
@@ -170,10 +163,7 @@ const deleteApplication = async (app: ApplicationDto) => {
               </div>
 
               <div class="app-details-section">
-                <CopyField
-                  label="Client ID"
-                  :value="app.clientId"
-                />
+                <CopyField label="Client ID" :value="app.clientId" />
 
                 <div class="detail-item">
                   <label>Scopes</label>
@@ -184,27 +174,15 @@ const deleteApplication = async (app: ApplicationDto) => {
                       :value="scope"
                       severity="secondary"
                     />
-                    <span
-                      v-if="!app.scopes?.length"
-                      class="no-roles"
-                    >
-                      Default scopes only
-                    </span>
+                    <span v-if="!app.scopes?.length" class="no-roles"> Default scopes only </span>
                   </div>
                 </div>
 
                 <div class="detail-item">
                   <label>Required Roles ({{ app.requiredRoles?.length || 0 }})</label>
                   <div class="roles-section">
-                    <Tag
-                      v-for="role in app.requiredRoles"
-                      :key="role"
-                      :value="role"
-                    />
-                    <span
-                      v-if="!app.requiredRoles?.length"
-                      class="no-roles"
-                    >
+                    <Tag v-for="role in app.requiredRoles" :key="role" :value="role" />
+                    <span v-if="!app.requiredRoles?.length" class="no-roles">
                       No roles required
                     </span>
                   </div>
@@ -213,10 +191,7 @@ const deleteApplication = async (app: ApplicationDto) => {
             </div>
           </template>
 
-          <div
-            v-if="applications.length === 0"
-            class="empty-state"
-          >
+          <div v-if="applications.length === 0" class="empty-state">
             <i class="fa-duotone fa-box"></i>
             <p>No applications found</p>
           </div>
@@ -233,10 +208,7 @@ const deleteApplication = async (app: ApplicationDto) => {
     @saved="handleSaved"
   />
 
-  <ClientSecretDialog
-    v-model:visible="showSecretDialog"
-    :secret="issuedSecret"
-  />
+  <ClientSecretDialog v-model:visible="showSecretDialog" :secret="issuedSecret" />
 </template>
 
 <style lang="scss" scoped>

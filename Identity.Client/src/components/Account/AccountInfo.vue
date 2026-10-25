@@ -4,11 +4,15 @@ import { UserDto } from '@/resources/api-clients/identity-api-client'
 const userStore = useUserStore()
 
 const user = ref<UserDto>()
-watch(() => userStore.user, (newUser) => {
-  if (newUser) {
-    user.value = new UserDto({ ...newUser })
-  }
-}, { immediate: true })
+watch(
+  () => userStore.user,
+  (newUser) => {
+    if (newUser) {
+      user.value = new UserDto({ ...newUser })
+    }
+  },
+  { immediate: true },
+)
 
 const handleUpdate = async () => {
   if (user.value) {
@@ -18,10 +22,7 @@ const handleUpdate = async () => {
 </script>
 
 <template>
-  <Card
-    v-if="user"
-    class="account-card account-info-card"
-  >
+  <Card v-if="user" class="account-card account-info-card">
     <template #title>
       <div class="card-header">
         <div class="title-section">
@@ -32,19 +33,12 @@ const handleUpdate = async () => {
     </template>
     <template #content>
       <div class="info-section">
-        <p class="section-description">
-          Manage your personal information and account preferences.
-        </p>
+        <p class="section-description">Manage your personal information and account preferences.</p>
 
         <div class="fields">
           <div class="field">
             <label for="email">Email Address</label>
-            <InputText
-              id="email"
-              :value="user.email"
-              readonly
-              disabled
-            />
+            <InputText id="email" :value="user.email" readonly disabled />
             <small class="field-hint">Your email address cannot be changed.</small>
           </div>
 
@@ -52,20 +46,13 @@ const handleUpdate = async () => {
             <label for="roles">Roles</label>
 
             <div class="flex">
-              <Tag
-                v-for="role in userStore.roles"
-                :key="role"
-                :value="role"
-              />
+              <Tag v-for="role in userStore.roles" :key="role" :value="role" />
             </div>
           </div>
 
           <div class="field">
             <label for="username">Username</label>
-            <InputText
-              id="username"
-              v-model="user.username"
-            />
+            <InputText id="username" v-model="user.username" />
             <small class="field-hint">This is how others will see you on the platform.</small>
           </div>
 
@@ -85,10 +72,7 @@ const handleUpdate = async () => {
     </template>
   </Card>
 
-  <Card
-    v-else
-    class="account-info-card"
-  >
+  <Card v-else class="account-info-card">
     <template #content>
       <div class="loading-state">
         <ProgressSpinner />
@@ -100,8 +84,6 @@ const handleUpdate = async () => {
 
 <style lang="scss" scoped>
 @use './account-shared.scss' as *;
-
-
 
 .info-section {
   gap: 2rem;

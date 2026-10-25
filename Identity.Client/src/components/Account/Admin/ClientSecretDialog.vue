@@ -18,31 +18,15 @@ defineProps<{
     :style="{ width: '40rem' }"
     :breakpoints="{ '640px': '90vw' }"
   >
-    <div
-      v-if="secret"
-      class="secret-content"
-    >
-      <Message
-        severity="warn"
-        :closable="false"
-      >
+    <div v-if="secret" class="secret-content">
+      <Message severity="warn" :closable="false">
         Copy this secret now and store it securely. It is stored hashed and won't be shown again.
       </Message>
-      <CopyField
-        label="Client ID"
-        :value="secret.clientId"
-      />
-      <CopyField
-        label="Client Secret"
-        :value="secret.clientSecret ?? ''"
-      />
+      <CopyField label="Client ID" :value="secret.clientId" />
+      <CopyField label="Client Secret" :value="secret.clientSecret ?? ''" />
     </div>
     <template #footer>
-      <Button
-        label="I've stored the secret"
-        severity="primary"
-        @click="visible = false"
-      />
+      <Button label="I've stored the secret" severity="primary" @click="visible = false" />
     </template>
   </Dialog>
 </template>

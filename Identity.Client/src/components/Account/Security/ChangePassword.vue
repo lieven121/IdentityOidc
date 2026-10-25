@@ -6,7 +6,7 @@ const usersClient = new UsersClient()
 const passwordData = ref({
   currentPassword: '',
   newPassword: '',
-  confirmPassword: ''
+  confirmPassword: '',
 })
 
 const isChangingPassword = ref(false)
@@ -32,14 +32,14 @@ const handleChangePassword = async () => {
   try {
     const updatePasswordDto = new UpdatePasswordDto({
       currentPassword: passwordData.value.currentPassword,
-      newPassword: passwordData.value.newPassword
+      newPassword: passwordData.value.newPassword,
     })
     await usersClient.updatePassword(updatePasswordDto)
     passwordSuccess.value = true
     passwordData.value = {
       currentPassword: '',
       newPassword: '',
-      confirmPassword: ''
+      confirmPassword: '',
     }
     setTimeout(() => {
       passwordSuccess.value = false
@@ -67,26 +67,15 @@ const handleChangePassword = async () => {
         Ensure your account stays secure by using a strong, unique password.
       </p>
 
-      <Message
-        v-if="passwordError"
-        severity="error"
-        :closable="false"
-      >
+      <Message v-if="passwordError" severity="error" :closable="false">
         {{ passwordError }}
       </Message>
 
-      <Message
-        v-if="passwordSuccess"
-        severity="success"
-        :closable="false"
-      >
+      <Message v-if="passwordSuccess" severity="success" :closable="false">
         Password changed successfully!
       </Message>
 
-      <form
-        @submit.prevent="handleChangePassword"
-        class="password-form"
-      >
+      <form @submit.prevent="handleChangePassword" class="password-form">
         <div class="field">
           <label for="current-password">Current Password</label>
           <Password
@@ -100,12 +89,7 @@ const handleChangePassword = async () => {
 
         <div class="field">
           <label for="new-password">New Password</label>
-          <Password
-            id="new-password"
-            v-model="passwordData.newPassword"
-            toggleMask
-            required
-          >
+          <Password id="new-password" v-model="passwordData.newPassword" toggleMask required>
             <template #footer>
               <div class="password-requirements">
                 <p>Password requirements:</p>
@@ -119,9 +103,7 @@ const handleChangePassword = async () => {
                   <li :class="{ valid: /[a-z]/.test(passwordData.newPassword) }">
                     One lowercase letter
                   </li>
-                  <li :class="{ valid: /[0-9]/.test(passwordData.newPassword) }">
-                    One number
-                  </li>
+                  <li :class="{ valid: /[0-9]/.test(passwordData.newPassword) }">One number</li>
                 </ul>
               </div>
             </template>

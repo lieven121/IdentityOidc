@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useClipboard } from '@vueuse/core'
-import { useToast } from 'primevue';
+import { useToast } from 'primevue'
 
-const toast = useToast();
+const toast = useToast()
 
 const props = withDefaults(
   defineProps<{
@@ -13,7 +13,7 @@ const props = withDefaults(
   }>(),
   {
     inputId: () => 'input-' + Math.random().toString(36).substring(7),
-  }
+  },
 )
 
 const copyValue = computed(() => props.extendedValue || props.value)
@@ -32,19 +32,14 @@ watch(copied, (newValue) => {
       summary: 'Copied to clipboard',
       detail: 'The value has been copied successfully.',
       life: 3000,
-      group: 'notifications'
+      group: 'notifications',
     })
   }
 })
-
 </script>
 
 <template>
-  <LabelInput
-    class="copy-field"
-    :inputId="props.inputId"
-    :label="props.label"
-  >
+  <LabelInput class="copy-field" :inputId="props.inputId" :label="props.label">
     <template #default>
       <div class="value-with-copy">
         <code>{{ props.value }}</code>

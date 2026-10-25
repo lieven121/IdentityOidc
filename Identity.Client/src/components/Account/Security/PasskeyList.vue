@@ -46,7 +46,8 @@ const handleAddPasskey = async () => {
 
   const name = await ask({
     title: 'Add a Passkey',
-    message: 'Give this passkey a name so you can recognise it later, for example the device or password manager it is stored in.',
+    message:
+      'Give this passkey a name so you can recognise it later, for example the device or password manager it is stored in.',
     confirm: { text: 'Next', severity: 'primary' },
     cancel: { text: 'Cancel', severity: 'secondary' },
     input: { label: 'Passkey name', placeholder: 'My laptop' },
@@ -66,20 +67,25 @@ const handleAddPasskey = async () => {
   try {
     let options
     try {
-      options = await usersClient.passkeyCreationOptions(new PasskeyCreationOptionsRequestDto({ currentPassword }))
+      options = await usersClient.passkeyCreationOptions(
+        new PasskeyCreationOptionsRequestDto({ currentPassword }),
+      )
     } catch (error) {
-      errorMessage.value = error instanceof ApiException && error.status === 400
-        ? 'The password is incorrect.'
-        : 'Could not start passkey registration.'
+      errorMessage.value =
+        error instanceof ApiException && error.status === 400
+          ? 'The password is incorrect.'
+          : 'Could not start passkey registration.'
       return
     }
     if (!options?.optionsJson) return
 
     const credential = await startRegistration({ optionsJSON: JSON.parse(options.optionsJson) })
-    await usersClient.addPasskey(new AddPasskeyDto({
-      credentialJson: JSON.stringify(credential),
-      name,
-    }))
+    await usersClient.addPasskey(
+      new AddPasskeyDto({
+        credentialJson: JSON.stringify(credential),
+        name,
+      }),
+    )
 
     await loadPasskeys()
     emit('changed')
@@ -133,28 +139,18 @@ const formatDate = (date: Date | undefined) => (date ? new Date(date).toLocaleDa
 
     <div class="section-details">
       <p class="section-description">
-        Sign in without a password using your device's fingerprint, face or screen lock. A passkey also counts as
-        two-factor authentication.
+        Sign in without a password using your device's fingerprint, face or screen lock. A passkey
+        also counts as two-factor authentication.
       </p>
 
-      <div
-        v-if="isLoading"
-        class="loading-state"
-      >
+      <div v-if="isLoading" class="loading-state">
         <ProgressSpinner />
         <p>Loading passkeys...</p>
       </div>
 
       <template v-else>
-        <ul
-          v-if="passkeys.length"
-          class="passkey-list"
-        >
-          <li
-            v-for="passkey in passkeys"
-            :key="passkey.id"
-            class="passkey-item"
-          >
+        <ul v-if="passkeys.length" class="passkey-list">
+          <li v-for="passkey in passkeys" :key="passkey.id" class="passkey-item">
             <div class="passkey-info">
               <i class="fa-duotone fa-fingerprint"></i>
               <div>
@@ -177,10 +173,7 @@ const formatDate = (date: Date | undefined) => (date ? new Date(date).toLocaleDa
         </ul>
 
         <div class="passkey-actions">
-          <p
-            v-if="!passkeys.length"
-            class="empty-state"
-          >No passkeys registered.</p>
+          <p v-if="!passkeys.length" class="empty-state">No passkeys registered.</p>
           <Button
             label="Add Passkey"
             icon="fa-duotone fa-plus"
@@ -192,14 +185,10 @@ const formatDate = (date: Date | undefined) => (date ? new Date(date).toLocaleDa
           />
         </div>
 
-        <small
-          v-if="!webAuthnSupported"
-          class="passkey-message"
-        >This browser does not support passkeys.</small>
-        <small
-          v-if="errorMessage"
-          class="passkey-message error"
-        >{{ errorMessage }}</small>
+        <small v-if="!webAuthnSupported" class="passkey-message"
+          >This browser does not support passkeys.</small
+        >
+        <small v-if="errorMessage" class="passkey-message error">{{ errorMessage }}</small>
       </template>
     </div>
   </div>

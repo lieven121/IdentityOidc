@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import type TwoFactorAuth from './TwoFactorAuth.vue'
-import { UsersClient, TwoFactorSetupDto, RecoveryCodesDto, TwoFactorCodeDto } from '@/resources/api-clients/identity-api-client'
+import {
+  UsersClient,
+  TwoFactorSetupDto,
+  RecoveryCodesDto,
+  TwoFactorCodeDto,
+} from '@/resources/api-clients/identity-api-client'
 import { useUserStore } from '@/stores/user'
 import { followReturnUrl } from '@/utils/safe-redirect'
 
@@ -49,7 +54,9 @@ const handleConfirmEnable2fa = (data: RecoveryCodesDto) => {
 
 const handleGenerateRecoveryCodes = async (code: string) => {
   try {
-    recoveryCodesData.value = await usersClient.generateRecoveryCodes(new TwoFactorCodeDto({ code }))
+    recoveryCodesData.value = await usersClient.generateRecoveryCodes(
+      new TwoFactorCodeDto({ code }),
+    )
     showRecoveryCodesDialog.value = true
   } catch (error) {
     console.error('Failed to generate recovery codes:', error)
@@ -79,7 +86,8 @@ const handleGenerateRecoveryCodes = async (code: string) => {
           icon="fa-duotone fa-shield-exclamation"
           class="setup-required"
         >
-          Your account requires two-factor authentication. Enable an authenticator app or add a passkey to continue.
+          Your account requires two-factor authentication. Enable an authenticator app or add a
+          passkey to continue.
         </Message>
 
         <Divider />

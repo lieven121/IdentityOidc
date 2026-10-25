@@ -2,10 +2,7 @@
 
 <template>
   <RouterView />
-  <Toast
-    position="bottom-right"
-    group="notifications"
-  />
+  <Toast position="bottom-right" group="notifications" />
   <DynamicDialog />
 </template>
 
