@@ -4,14 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build-watch": "vite build --watch",
+    "dev": "vp dev",
+    "build-watch": "vp build --watch",
     "build": "run-p type-check \"build-only {@}\" --",
-    "preview": "vite preview",
-    "build-only": "vite build",
+    "preview": "vp preview",
+    "build-only": "vp build",
     "type-check": "vue-tsc --build",
-    "lint": "eslint . --fix",
-    "format": "prettier --write src/"
+    "check": "vp check",
+    "lint": "vp lint . --fix",
+    "format": "vp fmt src/"
   },
   "dependencies": {
     "@primevue/themes": "4.3.7",
@@ -28,19 +29,18 @@
     "@tsconfig/node22": "^22.0.2",
     "@types/node": "^24.3.0",
     "@vitejs/plugin-vue": "^6.0.1",
-    "@vue/eslint-config-prettier": "^10.2.0",
-    "@vue/eslint-config-typescript": "^14.6.0",
     "@vue/tsconfig": "^0.8.1",
-    "eslint": "^9.34.0",
-    "eslint-plugin-vue": "^10.4.0",
     "npm-run-all2": "^8.0.4",
-    "prettier": "^3.6.2",
     "sass": "^1.90.0",
     "typescript": "~5.9.2",
     "unplugin-auto-import": "20.0.0",
     "unplugin-vue-components": "29.0.0",
-    "vite": "7.1.3",
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.4.0",
     "vite-plugin-vue-devtools": "^8.0.0",
-    "vue-tsc": "^3.0.6"
+    "vue-tsc": "^3.0.6",
+    "vite-plus": "1.4.0"
+  },
+  "overrides": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.4.0"
   }
 }

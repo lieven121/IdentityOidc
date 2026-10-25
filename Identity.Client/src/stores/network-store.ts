@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 export const useNetworkStore = defineStore('network-store', () => {
   const envUrl = 'http://localhost:3000'
   // env.VITE_API_URL = "http://localhost:3000";
-  function getBaseUrl(url?: string, defaultUrl?: string | undefined | null) {
+  function getBaseUrl(url?: string, defaultUrl?: string | null) {
     return transformBaseUrl(envUrl ?? defaultUrl ?? url)
   }
 
@@ -26,7 +26,7 @@ export const useNetworkStore = defineStore('network-store', () => {
     options: {
       headers?: { [key: string]: string }
       method: 'GET' | 'POST' | 'PUT' | 'DELETE'
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // oxlint-disable-next-line @typescript-eslint/no-explicit-any
       body: any
     },
   ) => {

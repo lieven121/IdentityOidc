@@ -29,7 +29,7 @@ export const useUserStore = defineStore('user', () => {
   })
 
   async function logout() {
-    router.push({ name: RouteNames.Logout })
+    await router.push({ name: RouteNames.Logout })
   }
 
   const isUpdating = ref(false)

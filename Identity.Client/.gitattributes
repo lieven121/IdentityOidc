@@ -1,0 +1,2 @@
+# Oxfmt (vp fmt / vp check) expects LF.
+* text=auto eol=lf

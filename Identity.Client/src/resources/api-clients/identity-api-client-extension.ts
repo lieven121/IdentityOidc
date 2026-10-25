@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* oxlint-disable @typescript-eslint/no-explicit-any */
 import { useConfigStore } from '@/stores/config'
 
 /*
@@ -23,7 +23,7 @@ export class ClientBase {
   protected async transformOptions(options: RequestInit): Promise<RequestInit> {
     // await this.authStore.getAccessToken()
     options.headers = {
-      ...options.headers,
+      ...(options.headers as Record<string, string> | undefined),
       'Content-Type': 'application/json',
     }
 
@@ -41,16 +41,7 @@ export class ClientBase {
     // if (response.status === 403 || response.status === 401) {
     //   if (window.location.pathname !== '/unauthorized') window.location.href = '/unauthorized'
     // } else
-    if (400 <= response.status && response.status < 600 && response.body) {
-      let errorText = undefined
-      try {
-        errorText = ((await response.clone().json()) as any)?.title
-      } catch (e: Error | any) {
-        console.error(e)
-        // If not json then json() will throw an error
-      }
-      errorText ??= response.clone ? await response.clone().text() : response //   this.alertStore.error(await errorText, 10000);
-    }
+    // Errors could be surfaced globally here, e.g. this.alertStore.error(message, 10000).
     return processor(response.clone())
   }
 }
