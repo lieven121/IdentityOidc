@@ -1,5 +1,6 @@
 using Identity.App.Data;
 using Identity.App.EndPoints;
+using Identity.App.EndPoints.Admin;
 using Identity.App.EndPoints.External;
 using Identity.App.EndPoints.Identity;
 using Identity.App.EndPoints.OpenIdConnect;
@@ -20,13 +21,15 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 });
 
 builder.Services
-    .AutoRegisterFromIdentityApp();
+    .AutoRegisterFromIdentityApp()
+    .AddHttpContextAccessor();
 
 builder
     .ConfigureIdentity()
     .ConfigureOpenIddict()
     .ConfigureCors()
     .ConfigureSwagger()
+    .ConfigureRateLimiting()
     .ConfigureReverseProxySupport();
 
 
@@ -41,22 +44,26 @@ builder.Services
 //builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
 var app = builder.Build();
+app.UseSecurityHeaders();
 app.UseSwagger();
 app.UseUrlsFromConfig();
 
 
 app.UseReverseProxySupport();
 app.UseOpenIddict();
+app.UseRateLimiter();
 app.UseAntiforgery();
 app.UseAuthentication();
 app.UseAuthorization();
 
 var apiEnpoints = app
-    .MapGroup("api");
+    .MapGroup("api")
+    .RequireCors(CorsConfig.ApiPolicy);
 
 
 apiEnpoints.MapStatusEndpoints();
 apiEnpoints.MapUsersEndpoints();
+apiEnpoints.MapAdminEndpoints();
 apiEnpoints.MapExternalEndpoints();
 
 apiEnpoints.MapIdentityEndpoints();

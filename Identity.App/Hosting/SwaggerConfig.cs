@@ -24,6 +24,7 @@ public static class SwaggerConfig
         //services.AddSwaggerGen();
         services.AddOpenApiDocument(options =>
         {
+            options.DefaultResponseReferenceTypeNullHandling = NJsonSchema.Generation.ReferenceTypeNullHandling.Null;
             options.AddOperationFilter(context =>
             {
 
@@ -68,12 +69,12 @@ public static class SwaggerConfig
 
     public static IApplicationBuilder UseSwagger(this WebApplication app)
     {
-        app.UseOpenApi(config =>
-        {
-        });
-
+        // The spec maps every admin endpoint; only expose it in development (client generation uses it).
         if (app.Environment.IsDevelopment())
         {
+            app.UseOpenApi(config =>
+            {
+            });
             app.UseSwaggerUi();
             app.UseReDoc();
         }
@@ -112,10 +113,17 @@ public static class SwaggerConfig
         var settings = new CSharpClientGeneratorSettings
         {
             ClassName = "{controller}Client",
-            ClientBaseClass = "ClientBase",
+            CSharpGeneratorSettings =
+            {
+              Namespace = "IdentityOidc.API"
+            },
+            UseBaseUrl = false,
+            //ClientBaseClass = "ClientBase",
             GenerateClientClasses = true,
             GenerateClientInterfaces = false,
             GenerateOptionalParameters = true,
+            WrapResponses = true,
+            WrapDtoExceptions = false
         };
 
         settings.OperationNameGenerator = new MultipleClientsFromFirstTagAndOperationNameGenerator();

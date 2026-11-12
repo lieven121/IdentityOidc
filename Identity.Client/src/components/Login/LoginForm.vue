@@ -1,34 +1,38 @@
 <script setup lang="ts">
+import { startAuthentication, browserSupportsWebAuthn } from '@simplewebauthn/browser'
+import type { ExternalLoginProvider } from './ExternalLoginProvider'
 import {
-  startAuthentication,
-  browserSupportsWebAuthn,
-  startRegistration,
-} from '@simplewebauthn/browser'
-import type { ExternalLoginProvider } from './ExternalLoginProvider';
-import { ApiException, IdentityClient, LoginRequest } from '@/resources/api-clients/identity-api-client';
+  ApiException,
+  IdentityClient,
+  LoginRequest,
+  PasskeyCredentialDto,
+} from '@/resources/api-clients/identity-api-client'
+import { RouteNames } from '@/router/routes'
+import { followReturnUrl } from '@/utils/safe-redirect'
 
+const props = withDefaults(
+  defineProps<{
+    position?: 'left' | 'center' | 'right'
 
-const props = withDefaults(defineProps<{
-  position?: 'left' | 'center' | 'right';
+    logo?: string
+    showPasswordDefault?: boolean
 
-  logo?: string;
-  showPasswordDefault?: boolean;
+    supportPasskeySignIn?: boolean
+    externalProviders?: ExternalLoginProvider[]
+  }>(),
+  {
+    position: 'left',
 
-  supportPasskeySignIn?: boolean;
-  externalProviders?: ExternalLoginProvider[]
-}>(), {
-  position: 'left',
+    showPasswordDefault: true,
 
-  showPasswordDefault: false,
-
-  supportPasskeySignIn: false,
-  externalProviders: () => [],
-});
+    supportPasskeySignIn: false,
+    externalProviders: () => [],
+  },
+)
 
 const router = useRouter()
-const networkStore = useNetworkStore()
 
-const identityClient = new IdentityClient();
+const identityClient = new IdentityClient()
 
 const internalLoading = ref(false)
 const loading = computed(() => {
@@ -90,16 +94,16 @@ async function login() {
     }
 
     try {
-
-      await identityClient.login(new LoginRequest({
-        email: username.value,
-        password: password.value,
-        twoFactorCode: otp.value,
-      }))
+      await identityClient.login(
+        new LoginRequest({
+          email: username.value,
+          password: password.value,
+          twoFactorCode: otp.value,
+        }),
+      )
       loginSuccesful()
-
     } catch (error) {
-      if ((error instanceof ApiException)) {
+      if (error instanceof ApiException) {
         console.error(error)
         if (error.status == 401) {
           usernameError.value = true
@@ -111,7 +115,6 @@ async function login() {
           showOtpInput()
         }
       }
-
     }
 
     // if (true && !showOtp.value) {
@@ -125,7 +128,6 @@ async function login() {
     //   }, 100)
     //   if (otp.value == '') return
     // }
-
 
     // console.log('Logging in with name:', username.value)
   } catch (error) {
@@ -146,36 +148,31 @@ function showOtpInput() {
   }, 100)
 }
 
-async function loginWithPasskey(register = false) {
+const passkeyError = ref(false)
+
+async function loginWithPasskey() {
   try {
     loggingIn.value = true
+    passkeyError.value = false
     if (!browserSupportsWebAuthn()) {
       console.log('WebAuthn not supported')
       return
     }
 
-    const data = await networkStore.fetchData('/api/fido/credential-options', {
-      method: 'POST',
-      body: {
-        username: username.value,
-        password: '',
-      },
-    })
-    // const options = useFetch('/fido/credential-options', {
-    //     method: 'POST',
-    //     body: JSON.stringify({
-    //         username: username.value
-    //     })
-    // })
-    if (register) {
-      // data.username = username.value
-      const registerResult = await startRegistration(data)
-      console.log('Registering with passkey', registerResult)
-    } else {
-      const result = await startAuthentication(data)
-      console.log('Logging in with passkey', result, username.value)
-    }
+    // Usernameless: the browser lists the passkeys it has for this site.
+    const options = await identityClient.passkeyRequestOptions()
+    if (!options?.optionsJson) return
+
+    const credential = await startAuthentication({ optionsJSON: JSON.parse(options.optionsJson) })
+    await identityClient.passkeyLogin(
+      new PasskeyCredentialDto({
+        credentialJson: JSON.stringify(credential),
+      }),
+    )
+    loginSuccesful()
   } catch (error) {
+    // NotAllowedError means the user cancelled the browser prompt.
+    if (!(error instanceof Error && error.name === 'NotAllowedError')) passkeyError.value = true
     console.error(error)
   } finally {
     loggingIn.value = false
@@ -184,15 +181,9 @@ async function loginWithPasskey(register = false) {
 
 function loginSuccesful() {
   //redirect to ReturnUrl otherwise to home using vue router
-  // console.log('Login successful')
-
-  const returnUrl = new URLSearchParams(window.location.search).get('ReturnUrl');
-  if (returnUrl) {
-    window.location.href = returnUrl;
-  } else {
-    router.push({ name: 'Account' });
+  if (!followReturnUrl()) {
+    router.push({ name: RouteNames.AccountInfo })
   }
-
 }
 
 const webAuthnSupported = ref(false)
@@ -203,27 +194,19 @@ onMounted(() => {
 </script>
 
 <template>
-  <div
-    class="login-form"
-    :class="position"
-  >
-
-    <div class="login-background"></div>
-    <div class="login-wrapper">
+  <div class="login-form" :class="position">
+    <div class="login-background" id="LoginBackground"></div>
+    <div class="login-wrapper" id="LoginWrapper">
       <Card class="login-card">
         <template #content>
-          <div class="logo-wrapper"><img
-              class="logo"
-              :src="logo"
-              alt="Logo"
-            /></div>
+          <div class="logo-wrapper"><img class="logo" :src="logo" alt="Logo" /></div>
           <h2>Login</h2>
           <form class="inputs">
             <div class="input-label">
               <InputText
                 id="UsernameInput"
                 autofocus="true"
-                autocomplete="email"
+                autocomplete="email webauthn"
                 :invalid="usernameError"
                 v-model="username"
                 :disabled="usernameDisabled"
@@ -233,14 +216,11 @@ onMounted(() => {
               <label for="UsernameInput">Email</label>
             </div>
 
-            <div
-              class="input-label"
-              v-show="showPassword"
-            >
+            <div class="input-label" v-show="showPassword">
               <Password
                 :inputProps="{ autocomplete: 'current-password' }"
                 :invalid="passwordError"
-                autocomplete="password"
+                autocomplete="current-password"
                 v-model="password"
                 input-id="PasswordInput"
                 :feedback="false"
@@ -250,14 +230,11 @@ onMounted(() => {
               <label for="PasswordInput">Password</label>
             </div>
 
-            <div
-              class="input-label otp"
-              v-if="showOtp"
-            >
+            <div class="input-label otp" v-if="showOtp">
               <InputOtp
                 :length="6"
                 :invalid="otpError"
-                aria-autocomplete="otp"
+                aria-autocomplete="one-time-code"
                 v-model="otp"
                 id="OtpInput"
               ></InputOtp>
@@ -266,45 +243,34 @@ onMounted(() => {
           </form>
 
           <div class="buttons">
-            <Button
-              severity="primary"
-              @click="login"
-              :disabled="loading"
-            >Login</Button>
+            <Button severity="primary" @click="login" :disabled="loading">Login</Button>
             <Button
               v-if="webAuthnSupported && supportPasskeySignIn"
               severity="secondary"
-              @click="loginWithPasskey(false)"
+              @click="loginWithPasskey"
               :disabled="loading"
             >
               <i class="fa-duotone fa-solid fa-key"></i>
-              Login with Passkey</Button>
+              Login with Passkey</Button
+            >
+            <small v-if="passkeyError" class="passkey-error"
+              >Passkey sign-in failed. Try again or use your password.</small
+            >
           </div>
 
-          <div
-            class="third-party"
-            v-if="externalProviders.length"
-          >
+          <div class="third-party" v-if="externalProviders.length">
             <Divider />
             <div class="options">
-              <Button
-                severity="secondary"
-                @click="loginWithPasskey(true)"
-              >
+              <Button severity="secondary">
                 <i class="fa-brands fa-google"></i>
               </Button>
-              <Button
-                severity="secondary"
-                @click="loginWithPasskey(false)"
-              ><i class="fa-brands fa-microsoft"></i>
-              </Button>
+              <Button severity="secondary"><i class="fa-brands fa-microsoft"></i> </Button>
             </div>
           </div>
         </template>
       </Card>
     </div>
   </div>
-
 </template>
 
 <style lang="scss" scoped>
@@ -318,7 +284,6 @@ onMounted(() => {
   grid-template-columns: var(--desktop-layout-columns, auto);
   --wrapper-border: var(--border-width) solid var(--p-neutral-500);
   --layout-panel-width: var(--login-wrapper-width, 40rem);
-
 
   &.left {
     --desktop-layout-columns: var(--layout-panel-width) 1fr;
@@ -401,7 +366,6 @@ onMounted(() => {
       }
     }
 
-
     h2 {
       text-align: center;
     }
@@ -412,9 +376,14 @@ onMounted(() => {
       display: flex;
       flex-direction: column;
 
-      &>*:not(:last-child) {
+      & > *:not(:last-child) {
         margin-bottom: 0.5rem;
       }
+    }
+
+    .passkey-error {
+      color: var(--p-red-500);
+      text-align: center;
     }
 
     .third-party {

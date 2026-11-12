@@ -9,4 +9,5 @@ public class ApplicationConfig
     public IEnumerable<string> RedirectUri { get; set; }
     public IEnumerable<string> PostLogoutRedirectUri { get; set; }
     public bool PKCE { get; set; }
+    public IEnumerable<string> RequiredRoles { get; set; } = Array.Empty<string>();
 }
