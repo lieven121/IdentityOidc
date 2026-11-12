@@ -3,12 +3,15 @@
 namespace Identity.App.Hosting;
 public static class CorsConfig
 {
+    public const string ApiPolicy = "api";
+
     public static IHostApplicationBuilder ConfigureCors(this IHostApplicationBuilder app)
     {
         var configuration = app.Configuration;
         var services = app.Services;
 
-        var origins = configuration.GetSection("Cors:Origins").Get<string[]>() ?? Array.Empty<string>();
+        var apiOrigins = configuration.GetSection("Cors:Origins").Get<string[]>() ?? Array.Empty<string>();
+        var origins = apiOrigins;
 
         var applications = configuration.GetSection("OpenIddict:ApplicationConfigs").Get<IEnumerable<ApplicationConfig>>();
         if(applications?.Any() == true)
@@ -21,9 +24,19 @@ public static class CorsConfig
 
         services.AddCors(options =>
         {
+            // OIDC endpoints (discovery, token, userinfo) are called with bearer tokens / client
+            // credentials, so client origins never need the identity cookie.
             options.AddDefaultPolicy(policy =>
             {
                 policy.WithOrigins(origins)
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+            });
+
+            // Cookie-authenticated API (account + admin): only explicitly trusted origins.
+            options.AddPolicy(ApiPolicy, policy =>
+            {
+                policy.WithOrigins(apiOrigins)
                 .AllowAnyHeader()
                 .AllowCredentials()
                 .AllowAnyMethod();

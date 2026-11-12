@@ -47,6 +47,10 @@ public static class OpenIddictConfig
                 //});
 
 
+                // Without a fixed issuer it is derived from the (client-controlled) Host header.
+                if (!string.IsNullOrWhiteSpace(openIddictSettings?.Issuer))
+                    options.SetIssuer(new Uri(openIddictSettings.Issuer));
+
                 options
                     .SetAuthorizationEndpointUris("/connect/authorize")
                     .SetTokenEndpointUris("/connect/token")
@@ -59,6 +63,7 @@ public static class OpenIddictConfig
                     Permissions.Scopes.Email,
                     Permissions.Scopes.Profile,
                     Permissions.Scopes.Roles,
+                    Models.Consts.Scopes.Admin,
                 }.Select(s => s.Replace(Permissions.Prefixes.Scope, ""));
 
                 options.RegisterScopes(scopes.ToArray());
@@ -68,13 +73,13 @@ public static class OpenIddictConfig
                 options.AllowAuthorizationCodeFlow();
                 options.AllowRefreshTokenFlow();
                 //PKCE
-                options.RequireProofKeyForCodeExchange();
+                //options.RequireProofKeyForCodeExchange();
 
 
                 // Register the signing and encryption credentials.
                 //todo only dev
-                options.AddDevelopmentEncryptionCertificate()
-                       .AddDevelopmentSigningCertificate();
+                //options.AddDevelopmentEncryptionCertificate()
+                //       .AddDevelopmentSigningCertificate();
 
                 if(!string.IsNullOrEmpty(openIddictSettings?.Encryption?.Key))
                 {
@@ -94,7 +99,7 @@ public static class OpenIddictConfig
                         throw new FileNotFoundException($"Certificate not found at {path}");
                     }
 
-                    var cert = X509CertificateLoader.LoadPkcs12FromFile(path, openIddictSettings.Signing.Cert.Password);
+                    var cert = X509CertificateLoader.LoadPkcs12FromFile(path, openIddictSettings.Encryption.Cert.Password);
                     options.AddEncryptionCertificate(cert);
                 }
 
@@ -131,22 +136,22 @@ public static class OpenIddictConfig
                     aspBuilder.DisableTransportSecurityRequirement();
                 }
 
+            })
+            .AddValidation(options =>
+            {
+                // Note: the validation handler uses OpenID Connect discovery
+                // to retrieve the address of the introspection endpoint.
+                //options.SetClientId(openIddictSettings.IdentityClientId);
+
+                // Import the configuration from the local OpenIddict server instance.
+                options.UseLocalServer();
+
+                // Register the System.Net.Http. integration
+                options.UseSystemNetHttp();
+
+                // Register the ASP.NET Core host.
+                options.UseAspNetCore();
             });
-            //.AddValidation(options =>
-            //{
-            //    // Note: the validation handler uses OpenID Connect discovery
-            //    // to retrieve the address of the introspection endpoint.
-            //    //options.SetClientId(openIddictSettings.IdentityClientId);
-
-            //    // Import the configuration from the local OpenIddict server instance.
-            //    options.UseLocalServer();
-
-            //    // Register the System.Net.Http. integration
-            //    options.UseSystemNetHttp();
-
-            //    // Register the ASP.NET Core host.
-            //    options.UseAspNetCore();
-            //});
 
 
 

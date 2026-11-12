@@ -1,19 +1,13 @@
-<script setup lang="ts">
-
-</script>
+<script setup lang="ts"></script>
 
 <template>
   <div class="login-view">
-    <LoginForm
-      position="center"
-      logo="/images/logo.svg"
-    />
+    <LoginForm position="center" logo="/images/logo.svg" support-passkey-sign-in />
   </div>
 </template>
 
 <style lang="scss">
 .login-view {
-
   // --login-wrapper-color: #3338;
   // --login-wrapper-color: #fff8;
   .login-background {
@@ -37,6 +31,5 @@
       }
     }
   }
-
 }
 </style>
