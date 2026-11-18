@@ -20,6 +20,7 @@ public partial class ApplicationManagementService(
     IOpenIddictScopeManager scopeManager,
     RoleManager<IdentityRole> roleManager,
     ConfigEntries configEntries,
+    ApplicationOrigins applicationOrigins,
     SecurityAudit audit)
 {
     public const int MinimumSecretLength = 24;
@@ -88,6 +89,8 @@ public partial class ApplicationManagementService(
             return TypedResults.BadRequest(string.Join(" ", ex.Results.Select(r => r.ErrorMessage)));
         }
 
+        applicationOrigins.Invalidate();
+
         foreach (var scope in ApplicationDescriptorBuilder.GetScopes(config))
             await ApplicationDescriptorBuilder.AddScopeResourceAsync(scopeManager, scope, clientId);
 
@@ -133,6 +136,8 @@ public partial class ApplicationManagementService(
         {
             return TypedResults.BadRequest(string.Join(" ", ex.Results.Select(r => r.ErrorMessage)));
         }
+
+        applicationOrigins.Invalidate();
 
         var oldScopes = ApplicationDescriptorBuilder.GetScopes(existing);
         var newScopes = ApplicationDescriptorBuilder.GetScopes(descriptor);
@@ -186,6 +191,7 @@ public partial class ApplicationManagementService(
 
         // The EF Core store also deletes the application's authorizations and tokens.
         await applicationManager.DeleteAsync(app);
+        applicationOrigins.Invalidate();
 
         foreach (var scope in ApplicationDescriptorBuilder.GetScopes(descriptor))
             await ApplicationDescriptorBuilder.RemoveScopeResourceAsync(scopeManager, scope, descriptor.ClientId!);
