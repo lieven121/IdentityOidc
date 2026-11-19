@@ -87,7 +87,11 @@ public static class CorsConfig
             if (!known.Contains(origin))
                 return policy;
 
-            return new CorsPolicyBuilder(policy).WithOrigins(origin).Build();
+            // The copied origin check is bound to the original policy's origins, so replace it.
+            return new CorsPolicyBuilder(policy)
+                .WithOrigins(origin)
+                .SetIsOriginAllowed(o => string.Equals(o, origin, StringComparison.OrdinalIgnoreCase))
+                .Build();
         }
     }
 }
