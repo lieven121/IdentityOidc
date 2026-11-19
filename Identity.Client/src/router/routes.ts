@@ -2,6 +2,8 @@ export const RouteNames = {
   Root: 'Root',
   Login: 'Login',
   Logout: 'Logout',
+  Error: 'Error',
+  NotFound: 'NotFound',
   Account: 'Account',
   AccountDefault: 'AccountDefault',
   AccountInfo: 'AccountInfo',

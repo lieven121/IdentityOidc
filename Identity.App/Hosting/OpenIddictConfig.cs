@@ -30,23 +30,6 @@ public static class OpenIddictConfig
             })
             .AddServer(options =>
             {
-
-                //options.EnableStatusCodePagesIntegration()
-                //options.AddEventHandler<ProcessErrorContext>(builder =>
-                //{
-                //    builder.UseInlineHandler(async context =>
-                //    {
-                //        var errorDescription = context.ErrorDescription;
-                //        var errorCode = context.Error;
-
-                //        this doesnt work, other solutions?
-                //        context.Response.Redirect($"/error?code={errorCode}&description={errorDescription}", );
-
-                //        context.HandleRequest();
-                //    });
-                //});
-
-
                 // Without a fixed issuer it is derived from the (client-controlled) Host header.
                 if (!string.IsNullOrWhiteSpace(openIddictSettings?.Issuer))
                     options.SetIssuer(new Uri(openIddictSettings.Issuer));
@@ -129,7 +112,10 @@ public static class OpenIddictConfig
                        .EnableAuthorizationEndpointPassthrough()
                        .EnableTokenEndpointPassthrough()
                        .EnableEndSessionEndpointPassthrough()
-                       .EnableUserInfoEndpointPassthrough();
+                       .EnableUserInfoEndpointPassthrough()
+                       // Errors that can't be returned to the client (unknown client, invalid
+                       // redirect_uri) reach the endpoint handlers, which show the error page.
+                       .EnableErrorPassthrough();
 
                 if(openIddictSettings?.OnlyAllowHttps != true)
                 {

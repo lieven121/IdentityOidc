@@ -68,6 +68,9 @@ public static class OpenIdConnectEndpoints
            SecurityAudit audit
            )
     {
+        if (GetErrorPageRedirect(httpContext) is { } errorPage)
+            return errorPage;
+
         var user = httpContext.User;
         var request = httpContext.GetOpenIddictServerRequest() ??
             throw new InvalidOperationException("The OpenID Connect request cannot be retrieved.");
@@ -275,11 +278,30 @@ public static class OpenIdConnectEndpoints
 
     private static async Task<IResult> EndSessionHandler(HttpContext context, SignInManager<ApplicationUser> signInManager)
     {
+        if (GetErrorPageRedirect(context) is { } errorPage)
+            return errorPage;
+
         await signInManager.SignOutAsync();
         return Results.SignOut(authenticationSchemes: new List<string>
             {
                 OpenIddictServerAspNetCoreDefaults.AuthenticationScheme
             });
+    }
+
+    // With error passthrough, an error OpenIddict can't return to the client is attached to the
+    // request instead; send the user to the error page of the Vue client.
+    private static IResult? GetErrorPageRedirect(HttpContext httpContext)
+    {
+        var response = httpContext.GetOpenIddictServerResponse();
+        if (string.IsNullOrEmpty(response?.Error))
+            return null;
+
+        var query = QueryString.Create(new Dictionary<string, string?>
+        {
+            ["error"] = response.Error,
+            ["error_description"] = response.ErrorDescription,
+        });
+        return Results.Redirect($"{httpContext.Request.PathBase}/error{query}");
     }
 
     private static async Task<ClaimsPrincipal> CreatePrincipalAsync(

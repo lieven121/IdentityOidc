@@ -65,6 +65,16 @@ const router = createRouter({
         },
       ],
     },
+    {
+      path: '/error',
+      name: RouteNames.Error,
+      component: () => import('../views/ErrorView.vue'),
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: RouteNames.NotFound,
+      component: () => import('../views/ErrorView.vue'),
+    },
   ],
 })
 
@@ -80,6 +90,8 @@ router.beforeEach(async (to, from, next) => {
     RouteNames.Security,
     RouteNames.Logout,
     RouteNames.Login,
+    RouteNames.Error,
+    RouteNames.NotFound,
   ]
   if (userStore.user?.requiresTwoFactorSetup && !exempt.includes(to.name)) {
     next({
