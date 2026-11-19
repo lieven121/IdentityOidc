@@ -4,6 +4,10 @@ import { RouteNames } from '@/router/routes'
 const route = useRoute()
 const router = useRouter()
 
+// Bound, not a static src: the branding images are supplied at deploy time, so the build must
+// not try to resolve them.
+const logo = '/images/logo.svg'
+
 // Friendly wording for the OpenID Connect errors a user can end up on; anything else falls
 // back to a generic message. The raw code and description stay visible for whoever debugs it.
 const messages: Record<string, { title: string; text: string }> = {
@@ -60,7 +64,7 @@ const goHome = () => router.push({ name: RouteNames.Root })
     <div class="error-wrapper">
       <Card class="error-card">
         <template #content>
-          <div class="logo-wrapper"><img class="logo" src="/images/logo.svg" alt="Logo" /></div>
+          <div class="logo-wrapper"><img class="logo" :src="logo" alt="Logo" /></div>
           <i class="error-icon fa-duotone fa-triangle-exclamation" aria-hidden="true"></i>
           <h2>{{ message.title }}</h2>
           <p class="error-text">{{ message.text }}</p>
